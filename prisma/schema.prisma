@@ -61,10 +61,10 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
-  emailVerified DateTime?
+  emailVerified DateTime? @map("email_verified")
   image         String?
 
-  passwordHash String?
+  passwordHash String? @map("password_hash")
 
   role UserRole @default(CANDIDATE)
 
@@ -81,16 +81,18 @@ model User {
   bookmarks    Bookmark[]
   jobViews     JobView[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
 }
 
 model Account {
   id                String @id @default(cuid())
-  userId            String
+  userId            String @map("user_id")
   type              String
   provider          String
-  providerAccountId String
+  providerAccountId String @map("provider_account_id")
 
   refresh_token String?
   access_token  String?
@@ -104,17 +106,19 @@ model Account {
 
   @@unique([provider, providerAccountId])
   @@index([userId])
+  @@map("accounts")
 }
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@map("sessions")
 }
 
 model VerificationToken {
@@ -127,31 +131,31 @@ model VerificationToken {
 
 model CandidateProfile {
   id     String @id @default(cuid())
-  userId String @unique
+  userId String @unique @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   headline    String?
   bio         String?
   location    String?
-  websiteUrl  String?
-  githubUrl   String?
-  linkedinUrl String?
-  resumeUrl   String?
+  websiteUrl  String? @map("website_url")
+  githubUrl   String? @map("github_url")
+  linkedinUrl String? @map("linkedin_url")
+  resumeUrl   String? @map("resume_url")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 }
 
 model EmployerProfile {
   id     String @id @default(cuid())
-  userId String @unique
+  userId String @unique @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title String?
   phone String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 }
 
 model Company {
@@ -159,8 +163,8 @@ model Company {
   name        String
   slug        String  @unique
   description String?
-  websiteUrl  String?
-  logoUrl     String?
+  websiteUrl  String? @map("website_url")
+  logoUrl     String? @map("logo_url")
   location    String?
 
   owners User[] @relation("CompanyOwners")
@@ -170,14 +174,15 @@ model Company {
   updatedAt DateTime @updatedAt
 
   @@index([name])
+  @@map("companies")
 }
 
 model Job {
   id        String  @id @default(cuid())
-  companyId String
+  companyId String  @map("company_id")
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  createdById String
+  createdById String @map("created_by_id")
   createdBy   User   @relation("JobCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   title        String
@@ -193,17 +198,17 @@ model Job {
   location String?
   isRemote Boolean @default(false)
 
-  salaryMin    Int?
-  salaryMax    Int?
-  salaryPeriod SalaryPeriod?
+  salaryMin    Int?          @map("salary_min")
+  salaryMax    Int?          @map("salary_max")
+  salaryPeriod SalaryPeriod? @map("salary_period")
   currency     String?
 
-  applyUrl   String?
-  applyEmail String?
+  applyUrl   String? @map("apply_url")
+  applyEmail String? @map("apply_email")
 
   isPublished Boolean   @default(false)
-  publishedAt DateTime?
-  expiresAt   DateTime?
+  publishedAt DateTime? @map("published_at")
+  expiresAt   DateTime? @map("expires_at")
 
   tags         JobTag[]
   applications Application[]
@@ -217,6 +222,7 @@ model Job {
   @@index([title])
   @@index([isPublished, publishedAt])
   @@index([location])
+  @@map("jobs")
 }
 
 model Tag {
@@ -224,46 +230,50 @@ model Tag {
   name      String   @unique
   slug      String   @unique
   jobs      JobTag[]
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("tags")
 }
 
 model JobTag {
-  jobId String
-  tagId String
+  jobId String @map("job_id")
+  tagId String @map("tag_id")
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
   tag Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([jobId, tagId])
   @@index([tagId])
+  @@map("job_tags")
 }
 
 model Application {
   id     String @id @default(cuid())
-  jobId  String
-  userId String
+  jobId  String @map("job_id")
+  userId String @map("user_id")
 
   job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   status ApplicationStatus @default(SUBMITTED)
 
-  coverLetter String?
-  resumeUrl   String?
+  coverLetter String? @map("cover_letter")
+  resumeUrl   String? @map("resume_url")
   answers     Json?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([jobId, userId])
   @@index([userId, createdAt])
   @@index([jobId, createdAt])
+  @@map("applications")
 }
 
 model Bookmark {
   id     String @id @default(cuid())
-  jobId  String
-  userId String
+  jobId  String @map("job_id")
+  userId String @map("user_id")
 
   job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -272,19 +282,21 @@ model Bookmark {
 
   @@unique([jobId, userId])
   @@index([userId, createdAt])
+  @@map("bookmarks")
 }
 
 model JobView {
   id     String  @id @default(cuid())
-  jobId  String
-  userId String?
-  ipHash String?
+  jobId  String  @map("job_id")
+  userId String? @map("user_id")
+  ipHash String? @map("ip_hash")
 
   job  Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([jobId, createdAt])
   @@index([userId, createdAt])
+  @@map("job_views")
 }
