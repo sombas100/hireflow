@@ -62,3 +62,11 @@ export const JobsQuerySchema = z.object({
     .pipe(z.number().int().min(1).max(50))
     .default(10),
 });
+
+export const CreateCompanySchema = z.object({
+  name: z.string().min(2, "Company name must be at least 2 characters"),
+  slug: z.string().min(2, "Slug must be at least 2 characters"),
+  description: z.string().optional(),
+  websiteUrl: z.string().url("Website must be a valid URL").optional(),
+  location: z.string().optional(),
+});
