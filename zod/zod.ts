@@ -6,21 +6,59 @@ export const userScehma = z.object({
     password: z.string().min(6, "Password must contain at at least 6 characters")
 })
 
-export const createJobSchema = z.object({
-    title: z.string().min(1).max(255),
-    slug: z.string().min(1).max(50),
-    description: z.string().min(1).max(255),
-    requirements: z.string().min(1).max(255),
-    benefits: z.string().min(1).max(255),
-    jobType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN", "TEMP", "FREELANCE"] ),
-    WorkplaceType: z.enum(["ONSITE", "REMOTE", "HYBRID"]),
-    ExperienceLevel: z.enum(["INTERN", "JUNIOR", "MID", "SENIOR", "LEAD"]),
-    location: z.string().min(1).max(100),
-    isRemote: z.boolean().optional(),
-    salaryMin: z.number(),
-    salaryMax: z.number(),
-    salaryPeriod: z.enum(["YEAR", "MONTH",  "HOUR"]),
-    currency: z.string().min(3),
-    applyUrl: z.string(),
-    applyEmail: z.string()
-})
+export const CreateJobSchema = z.object({
+  companyId: z.string().min(1),
+  title: z.string().min(3),
+  slug: z.string().min(3), 
+  description: z.string().min(10),
+  jobType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN", "TEMP", "FREELANCE"]),
+  workplaceType: z.enum(["ONSITE", "REMOTE", "HYBRID"]),
+  location: z.string().optional(),
+  isRemote: z.boolean().optional().default(false),
+  tagIds: z.array(z.string().min(1)).optional().default([]),
+  isPublished: z.boolean().optional().default(false),
+});
+
+export const JobsQuerySchema = z.object({
+  q: z.string().trim().min(1).optional(),
+  location: z.string().trim().min(1).optional(),
+
+  
+  type: z
+    .enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN", "TEMP", "FREELANCE"])
+    .optional(),
+
+  workplace: z.enum(["ONSITE", "REMOTE", "HYBRID"]).optional(),
+  tags: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((val) => {
+      if (!val) return [];
+      const raw = Array.isArray(val) ? val : [val];
+      return raw
+        .flatMap((s) => s.split(","))
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }),
+
+  remote: z
+    .union([z.literal("true"), z.literal("false")])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
+
+  sort: z.enum(["newest", "salary"]).optional().default("newest"),
+
+  page: z
+    .string()
+    .optional()
+    .transform((v) => (v ? Number(v) : 1))
+    .pipe(z.number().int().min(1))
+    .default(1),
+
+  limit: z
+    .string()
+    .optional()
+    .transform((v) => (v ? Number(v) : 10))
+    .pipe(z.number().int().min(1).max(50))
+    .default(10),
+});
