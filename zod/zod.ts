@@ -70,3 +70,9 @@ export const CreateCompanySchema = z.object({
   websiteUrl: z.string().url("Website must be a valid URL").optional(),
   location: z.string().optional(),
 });
+
+export const CreateApplicationSchema = z.object({
+  jobId: z.string().min(1, "Job ID is required"),
+  coverLetter: z.string().optional(),
+  resumeUrl: z.string().url("Resume URL must be a valid URL").optional(),
+});
