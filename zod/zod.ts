@@ -120,3 +120,7 @@ export const UpdateApplicationSchema = z.object({
   ]),
 });
 
+export const CreateBookmarkSchema = z.object({
+  jobId: z.string().min(1, "Job id is required"),
+});
+
