@@ -76,3 +76,14 @@ export const CreateApplicationSchema = z.object({
   coverLetter: z.string().optional(),
   resumeUrl: z.string().url("Resume URL must be a valid URL").optional(),
 });
+
+export const UpdateApplicationSchema = z.object({
+  status: z.enum([
+    "SUBMITTED",
+    "IN_REVIEW",
+    "SHORTLISTED",
+    "REJECTED",
+    "WITHDRAWN",
+    "HIRED",
+  ]),
+});
