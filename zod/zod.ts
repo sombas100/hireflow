@@ -19,6 +19,38 @@ export const CreateJobSchema = z.object({
   isPublished: z.boolean().optional().default(false),
 });
 
+export const UpdateJobSchema = z.object({
+  title: z.string().min(3).optional(),
+  slug: z.string().min(3).optional(),
+  description: z.string().min(10).optional(),
+  requirements: z.string().optional(),
+  benefits: z.string().optional(),
+
+  jobType: z
+    .enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN", "TEMP", "FREELANCE"])
+    .optional(),
+
+  workplaceType: z.enum(["ONSITE", "REMOTE", "HYBRID"]).optional(),
+
+  experienceLevel: z
+    .enum(["INTERN", "JUNIOR", "MID", "SENIOR", "LEAD"])
+    .optional(),
+
+  location: z.string().optional(),
+  isRemote: z.boolean().optional(),
+
+  salaryMin: z.number().int().nonnegative().optional(),
+  salaryMax: z.number().int().nonnegative().optional(),
+  salaryPeriod: z.enum(["YEAR", "MONTH", "HOUR"]).optional(),
+  currency: z.string().length(3).optional(),
+
+  applyUrl: z.string().url().optional(),
+  applyEmail: z.string().email().optional(),
+
+  isPublished: z.boolean().optional(),
+  expiresAt: z.string().datetime().optional().nullable(),
+});
+
 export const JobsQuerySchema = z.object({
   q: z.string().trim().min(1).optional(),
   location: z.string().trim().min(1).optional(),
@@ -87,3 +119,4 @@ export const UpdateApplicationSchema = z.object({
     "HIRED",
   ]),
 });
+
