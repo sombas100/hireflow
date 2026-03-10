@@ -5,7 +5,6 @@ import { CreateApplicationSchema } from "@/zod/zod";
 
 export async function POST(request: NextRequest) {
     try {
-        
         const session = await auth();
         const userId = session?.user.id as string | undefined;
         const role = session?.user.role as string | undefined;
