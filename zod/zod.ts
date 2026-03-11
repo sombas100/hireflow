@@ -124,3 +124,13 @@ export const CreateBookmarkSchema = z.object({
   jobId: z.string().min(1, "Job id is required"),
 });
 
+export const UpdateCandidateProfileSchema = z.object({
+  headline: z.string().min(2).optional(),
+  bio: z.string().optional(),
+  location: z.string().optional(),
+  websiteUrl: z.string().url("Website URL must be valid").optional().or(z.literal("")),
+  githubUrl: z.string().url("GitHub URL must be valid").optional().or(z.literal("")),
+  linkedinUrl: z.string().url("LinkedIn URL must be valid").optional().or(z.literal("")),
+  resumeUrl: z.string().url("Resume URL must be valid").optional().or(z.literal("")),
+});
+
