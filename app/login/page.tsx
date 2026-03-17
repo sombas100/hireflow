@@ -15,12 +15,12 @@ const LoginPage = () => {
         maxWidth="950px"
         m="auto"
       >
-        <form className="flex flex-col shadow-zinc-400 shadow-sm max-w-md w-full items-center justify-center p-8 rounded-lg">
+        <form className="flex flex-col shadow-zinc-600 shadow-md max-w-md w-full items-center justify-center p-8 rounded-lg">
           <Heading mb="1" as="h1" size="9" className="tracking-wide">
             Hire<span className="text-primary">Flow</span>
           </Heading>
           <Text size="3" as="p" className="text-zinc-300">
-            Sign in to get started
+            Sign in and get started
           </Text>
           <Flex gap="1" mb="5" direction="column" width="100%" mt="6">
             <label>Email Address</label>

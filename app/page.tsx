@@ -1,5 +1,4 @@
 import { Flex, Text, Heading, Button } from "@radix-ui/themes";
-import Image from "next/image";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 
 export default function Home() {

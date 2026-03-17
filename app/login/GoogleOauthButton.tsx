@@ -13,7 +13,7 @@ const GoogleOauthButton = () => {
     bg-linear-to-br from-purple-500 to-primary hover:bg-linear-to-tl transition-all 
     ease-in cursor-pointer"
     >
-      Signin with Google <AiFillGoogleCircle size={20} className="ml-1" />
+      Sign in with Google <AiFillGoogleCircle size={20} className="ml-1" />
     </button>
   );
 };
