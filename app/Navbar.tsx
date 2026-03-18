@@ -18,7 +18,7 @@ const Navbar = async () => {
       <div className="flex gap-6">
         {navLinks.map((link) => (
           <Link
-            className="font-medium pb-1 hover:p-0 hover:text-gray-200 border-b border-hidden hover:border-solid hover:border-primary transition-colors"
+            className="font-medium pb-1 hover:p-0 hover:text-gray-200 border-b border-primary border-hidden hover:border-solid hover:border-primary transition-colors"
             key={link.name}
             href={link.to}
           >
