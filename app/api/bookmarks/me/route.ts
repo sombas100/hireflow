@@ -63,6 +63,9 @@ export async function GET() {
       },
     });
 
+    if (!bookmarks)
+      return NextResponse.json({ message: 'Your bookmarks are empty'}, { status: 404 })
+
     return NextResponse.json(
       {
         data: bookmarks.map((bookmark) => ({
