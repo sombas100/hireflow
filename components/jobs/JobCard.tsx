@@ -33,7 +33,7 @@ export default function JobCard({ job }: JobCardProps) {
   return (
     <Link
       href={`/jobs/${job.company.slug}/${job.slug}`}
-      className="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+      className="block rounded-xl border border-gray-200 bg-white hover:border-primary p-5 shadow-sm transition hover:shadow-md"
     >
       <div className="flex flex-col gap-4">
         <div>

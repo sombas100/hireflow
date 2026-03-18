@@ -7,7 +7,7 @@ const GoogleOauthButton = () => {
   return (
     <button
       type="button"
-      onClick={() => signIn("google", { redirectTo: "/" })}
+      onClick={() => signIn("google", { redirectTo: "/jobs" })}
       className="
     flex items-center justify-center w-full rounded-lg py-2 px-1
     bg-linear-to-br from-purple-500 to-primary hover:bg-linear-to-tl transition-all 

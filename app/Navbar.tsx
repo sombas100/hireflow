@@ -1,8 +1,13 @@
 import { Heading } from "@radix-ui/themes";
 import Link from "next/link";
 import { navLinks } from "@/constants";
+import { auth } from "@/auth";
+import UserAvatar from "@/components/ui/UserAvatar";
+import SignOutButton from "@/components/auth/SignOutButton";
 
-const Navbar = () => {
+const Navbar = async () => {
+  const session = await auth();
+  const authenticatedUser = session?.user;
   return (
     <nav className="flex items-center justify-between text-white bg-gray-900 p-4 max-w-full w-full">
       <div>
@@ -13,7 +18,7 @@ const Navbar = () => {
       <div className="flex gap-6">
         {navLinks.map((link) => (
           <Link
-            className="font-semibold pb-1 hover:text-gray-200 hover:border-b hover:border-primary transition-colors"
+            className="font-medium pb-1 hover:p-0 hover:text-gray-200 border-b border-hidden hover:border-solid hover:border-primary transition-colors"
             key={link.name}
             href={link.to}
           >
@@ -21,13 +26,20 @@ const Navbar = () => {
           </Link>
         ))}
       </div>
-      <div>
-        <Link href="/login">
-          <button className="border font-semibold py-2 px-3 rounded-lg hover:border-primary hover:text-primary transition-all ease-in cursor-pointer">
-            Sign In
-          </button>
-        </Link>
-      </div>
+      {authenticatedUser ? (
+        <div className="flex gap-5">
+          <SignOutButton />
+          <UserAvatar />
+        </div>
+      ) : (
+        <div>
+          <Link href="/login">
+            <button className="border font-semibold py-2 px-3 rounded-lg hover:border-primary hover:text-primary transition-all ease-in cursor-pointer">
+              Sign In
+            </button>
+          </Link>
+        </div>
+      )}
     </nav>
   );
 };

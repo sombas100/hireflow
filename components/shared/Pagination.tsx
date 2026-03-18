@@ -3,31 +3,28 @@ import Link from "next/link";
 type PaginationProps = {
   page: number;
   totalPages: number;
-  searchParams: {
-    q?: string;
-    location?: string;
-    type?: string;
-    workplace?: string;
-    page?: string;
-  };
+  searchParams: Record<string, string | undefined>;
+  basePath?: string;
 };
 
 export default function Pagination({
   page,
   totalPages,
   searchParams,
+  basePath = "/jobs",
 }: PaginationProps) {
   const createPageLink = (newPage: number) => {
     const params = new URLSearchParams();
 
-    if (searchParams.q) params.set("q", searchParams.q);
-    if (searchParams.location) params.set("location", searchParams.location);
-    if (searchParams.type) params.set("type", searchParams.type);
-    if (searchParams.workplace) params.set("workplace", searchParams.workplace);
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value && key !== "page") {
+        params.set(key, value);
+      }
+    });
 
     params.set("page", String(newPage));
 
-    return `/jobs?${params.toString()}`;
+    return `${basePath}?${params.toString()}`;
   };
 
   if (totalPages <= 1) return null;
