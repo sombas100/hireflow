@@ -3,6 +3,7 @@ import { getJobs } from "@/lib/actions/getJobs";
 import JobList from "@/components/jobs/JobList";
 import Pagination from "@/components/shared/Pagination";
 import Navbar from "../Navbar";
+import JobFilters from "@/components/jobs/JobFilters";
 
 type JobsPageProps = {
   searchParams: Promise<{
@@ -33,9 +34,18 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             </p>
           </div>
 
+          <JobFilters
+            currentFilters={{
+              q: resolvedSearchParams.q,
+              location: resolvedSearchParams.location,
+              type: resolvedSearchParams.type,
+              workplace: resolvedSearchParams.workplace,
+            }}
+          />
+
           <div className="mb-6">
             <p className="text-sm text-gray-600">
-              Showing {jobs.length} job{jobs.length !== 1 ? "s" : ""}
+              Showing {meta.total} job{meta.total !== 1 ? "s" : ""}
             </p>
           </div>
 

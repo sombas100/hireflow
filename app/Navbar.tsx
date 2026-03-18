@@ -6,14 +6,14 @@ const Navbar = () => {
   return (
     <nav className="flex items-center justify-between text-white bg-gray-900 p-4 max-w-full w-full">
       <div>
-        <Heading mb="1" as="h1" size="6" className="tracking-wide">
+        <Heading mb="1" as="h1" size="6" className="tracking-widest">
           Hire<span className="text-primary">Flow</span>
         </Heading>
       </div>
       <div className="flex gap-6">
         {navLinks.map((link) => (
           <Link
-            className="font-semibold hover:text-primary transition-colors"
+            className="font-semibold pb-1 hover:text-gray-200 hover:border-b hover:border-primary transition-colors"
             key={link.name}
             href={link.to}
           >
