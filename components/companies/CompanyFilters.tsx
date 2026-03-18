@@ -57,7 +57,7 @@ export default function CompanyFilters({
 
         <button
           type="submit"
-          className="self-end rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+          className="self-end rounded-lg cursor-pointer bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
         >
           Search
         </button>
@@ -65,7 +65,7 @@ export default function CompanyFilters({
         <button
           type="button"
           onClick={handleReset}
-          className="self-end rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="self-end rounded-lg cursor-pointer border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           Reset
         </button>

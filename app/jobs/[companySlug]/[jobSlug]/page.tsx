@@ -1,3 +1,4 @@
+import { Tag } from "@/interfaces/job";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -111,16 +112,14 @@ export default async function JobDetailsPage({ params }: JobDetailsPageProps) {
 
             {job.tags?.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
-                {job.tags.map(
-                  (tag: { id: string; name: string; slug: string }) => (
-                    <span
-                      key={tag.id}
-                      className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
-                    >
-                      {tag.name}
-                    </span>
-                  ),
-                )}
+                {job.tags.map((tag: Tag) => (
+                  <span
+                    key={tag.id}
+                    className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+                  >
+                    {tag.name}
+                  </span>
+                ))}
               </div>
             )}
 
