@@ -7,11 +7,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    
     "lint": "eslint"
+  },
+  "prisma": {
+  "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@auth/express": "^0.12.1",
     "@auth/prisma-adapter": "^2.11.1",
+    "@faker-js/faker": "^10.3.0",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",
     "@prisma/extension-accelerate": "^3.0.1",
