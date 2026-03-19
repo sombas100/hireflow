@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import ApplicationList from "@/components/candidate/ApplicationList";
 import { Job } from "@/interfaces/job";
+import Navbar from "@/app/Navbar";
 
 type Application = {
   id: string;
@@ -91,17 +92,23 @@ export default async function CandidateApplicationsPage() {
   const applications = await getApplications(userId);
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Applications</h1>
-          <p className="mt-2 text-gray-600">
-            Track the jobs you’ve applied for and manage your applications.
-          </p>
-        </div>
+    <>
+      <Navbar />
 
-        <ApplicationList applications={applications} />
-      </div>
-    </main>
+      <main className="min-h-screen bg-gray-50 px-4 py-10">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">
+              My Applications
+            </h1>
+            <p className="mt-2 text-gray-600">
+              Track the jobs you’ve applied for and manage your applications.
+            </p>
+          </div>
+
+          <ApplicationList applications={applications} />
+        </div>
+      </main>
+    </>
   );
 }

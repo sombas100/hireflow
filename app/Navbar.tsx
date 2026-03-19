@@ -4,6 +4,7 @@ import { navLinks } from "@/constants";
 import { auth } from "@/auth";
 import UserAvatar from "@/components/ui/UserAvatar";
 import SignOutButton from "@/components/auth/SignOutButton";
+import UserMenu from "@/components/ui/UserMenu";
 
 const Navbar = async () => {
   const session = await auth();
@@ -27,9 +28,8 @@ const Navbar = async () => {
         ))}
       </div>
       {authenticatedUser ? (
-        <div className="flex gap-5">
-          <SignOutButton />
-          <UserAvatar />
+        <div className="flex items-center gap-5">
+          <UserMenu user={authenticatedUser} />
         </div>
       ) : (
         <div>
