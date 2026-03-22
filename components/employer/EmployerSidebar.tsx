@@ -67,7 +67,7 @@ export default function EmployerSidebar({ userName }: EmployerSidebarProps) {
       <div className="border-t border-gray-200 px-4 py-4">
         <div className="mb-3">
           <Link
-            href="/"
+            href="/jobs"
             className="block rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100"
           >
             Back to Site

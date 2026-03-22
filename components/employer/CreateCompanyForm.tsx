@@ -160,7 +160,7 @@ export default function CreateCompanyForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+          className="rounded-lg cursor-pointer bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
           {isSubmitting ? "Creating..." : "Create Company"}
         </button>
