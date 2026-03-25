@@ -126,3 +126,89 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     );
   }
 }
+
+export async function DELETE(_req: Request, context: RouteContext) {
+  try {
+    const session = await auth();
+    const userId = (session?.user as any)?.id as string | undefined;
+    const role = (session?.user as any)?.role as string | undefined;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (role !== "EMPLOYER" && role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { companyId } = await context.params;
+
+    if (!companyId) {
+      return NextResponse.json(
+        { error: "Company id is required" },
+        { status: 400 }
+      );
+    }
+
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: {
+        id: true,
+        name: true,
+        owners: {
+          select: {
+            id: true,
+          },
+        },
+        _count: {
+          select: {
+            jobs: true,
+          },
+        },
+      },
+    });
+
+    if (!company) {
+      return NextResponse.json(
+        { error: "Company not found" },
+        { status: 404 }
+      );
+    }
+
+    if (role !== "ADMIN") {
+      const ownsCompany = company.owners.some((owner) => owner.id === userId);
+
+      if (!ownsCompany) {
+        return NextResponse.json(
+          { error: "You do not have permission to delete this company" },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (company._count.jobs > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "You cannot delete a company that still has jobs. Delete the jobs first.",
+        },
+        { status: 400 }
+      );
+    }
+
+    await prisma.company.delete({
+      where: { id: companyId },
+    });
+
+    return NextResponse.json(
+      { message: "Company deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Delete company error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

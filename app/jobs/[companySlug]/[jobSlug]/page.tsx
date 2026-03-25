@@ -1,6 +1,8 @@
 import { Tag } from "@/interfaces/job";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
+import ApplyToJobCard from "@/components/jobs/ApplyToJobCard";
 
 type JobDetailsPageProps = {
   params: Promise<{
@@ -29,6 +31,10 @@ async function getJob(companySlug: string, jobSlug: string) {
 }
 
 export default async function JobDetailsPage({ params }: JobDetailsPageProps) {
+  const session = await auth();
+  const authenticatedUser = session?.user;
+  const userRole = (authenticatedUser as any)?.role as string | undefined;
+  const isAuthenticated = Boolean(authenticatedUser);
   const { companySlug, jobSlug } = await params;
 
   const response = await getJob(companySlug, jobSlug);
@@ -180,38 +186,50 @@ export default async function JobDetailsPage({ params }: JobDetailsPageProps) {
               )}
             </div>
 
-            <aside className="h-fit rounded-xl border border-gray-200 bg-gray-50 p-5">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                About the Company
-              </h3>
+            <aside className="space-y-6">
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                  About the Company
+                </h3>
 
-              <div className="space-y-3 text-sm text-gray-700">
-                <p className="font-medium text-gray-900">{job.company.name}</p>
-
-                {job.company.location && (
-                  <p>
-                    <span className="font-medium">Location:</span>{" "}
-                    {job.company.location}
+                <div className="space-y-3 text-sm text-gray-700">
+                  <p className="font-medium text-gray-900">
+                    {job.company.name}
                   </p>
-                )}
 
-                {job.company.websiteUrl && (
-                  <a
-                    href={job.company.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-blue-600 hover:underline"
-                  >
-                    Visit company website
-                  </a>
-                )}
+                  {job.company.location && (
+                    <p>
+                      <span className="font-medium">Location:</span>{" "}
+                      {job.company.location}
+                    </p>
+                  )}
 
-                {job.company.description && (
-                  <p className="whitespace-pre-line leading-6 text-gray-600">
-                    {job.company.description}
-                  </p>
-                )}
+                  {job.company.websiteUrl && (
+                    <a
+                      href={job.company.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-blue-600 hover:underline"
+                    >
+                      Visit company website
+                    </a>
+                  )}
+
+                  {job.company.description && (
+                    <p className="whitespace-pre-line leading-6 text-gray-600">
+                      {job.company.description}
+                    </p>
+                  )}
+                </div>
               </div>
+
+              <ApplyToJobCard
+                jobId={job.id}
+                userRole={userRole}
+                isAuthenticated={isAuthenticated}
+                applyUrl={job.applyUrl}
+                applyEmail={job.applyEmail}
+              />
             </aside>
           </div>
         </div>

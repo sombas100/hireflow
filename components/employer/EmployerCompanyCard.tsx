@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type { Company } from "@/interfaces/company";
 
 type EmployerCompanyCardProps = {
@@ -8,6 +12,40 @@ type EmployerCompanyCardProps = {
 export default function EmployerCompanyCard({
   company,
 }: EmployerCompanyCardProps) {
+  const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this company?",
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      setMessage("");
+
+      const res = await fetch(`/api/employer/companies/${company.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to delete company");
+      }
+
+      router.refresh();
+    } catch (error: any) {
+      console.error(error);
+      setMessage(error.message || "Something went wrong while deleting.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4">
@@ -61,7 +99,18 @@ export default function EmployerCompanyCard({
           >
             Post Job
           </Link>
+
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+          >
+            {isDeleting ? "Deleting..." : "Delete Company"}
+          </button>
         </div>
+
+        {message && <p className="text-sm text-red-600">{message}</p>}
       </div>
     </div>
   );
