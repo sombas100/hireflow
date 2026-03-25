@@ -74,7 +74,7 @@ export default function EmployerSidebar({ userName }: EmployerSidebarProps) {
           </Link>
         </div>
 
-        <div className="rounded-lg hover:bg-gray-100">
+        <div className="rounded-lg hover:bg-gray-100 cursor-pointer">
           <SignOutButton />
         </div>
       </div>
