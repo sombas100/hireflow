@@ -49,6 +49,13 @@ export default function EmployerCompanyCard({
           </Link>
 
           <Link
+            href={`/employer/companies/${company.id}/edit`}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Edit Company
+          </Link>
+
+          <Link
             href={`/employer/jobs/create?companyId=${company.id}`}
             className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >

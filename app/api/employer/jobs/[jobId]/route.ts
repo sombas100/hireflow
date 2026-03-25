@@ -81,7 +81,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   }
 }
 
-export async function PATCH(request: NextRequest, context: RouteContext) {
+export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     const session = await auth();
     const userId = (session?.user as any)?.id as string | undefined;
@@ -101,7 +101,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Job id is required" }, { status: 400 });
     }
 
-    const body = await request.json();
+    const body = await req.json();
     const validation = UpdateJobSchema.safeParse(body);
 
     if (!validation.success) {
@@ -128,7 +128,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       select: {
         id: true,
         createdById: true,
-        companyId: true,
         company: {
           select: {
             owners: {
@@ -157,56 +156,80 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       }
     }
 
+    const { tagIds, ...rest } = data;
+
     const updateData = {
-      ...data,
+      ...rest,
       expiresAt:
-        data.expiresAt === undefined
+        rest.expiresAt === undefined
           ? undefined
-          : data.expiresAt === null
+          : rest.expiresAt === null
           ? null
-          : new Date(data.expiresAt),
+          : new Date(rest.expiresAt),
       publishedAt:
-        data.isPublished === true ? new Date() : undefined,
+        rest.isPublished === true ? new Date() : undefined,
     };
 
-    const updatedJob = await prisma.job.update({
-      where: { id: jobId },
-      data: updateData,
-      include: {
-        company: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            logoUrl: true,
-            location: true,
+    const updatedJob = await prisma.$transaction(async (tx) => {
+      await tx.job.update({
+        where: { id: jobId },
+        data: updateData,
+      });
+
+      if (tagIds !== undefined) {
+        await tx.jobTag.deleteMany({
+          where: { jobId },
+        });
+
+        if (tagIds.length > 0) {
+          await tx.jobTag.createMany({
+            data: tagIds.map((tagId) => ({
+              jobId,
+              tagId,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
+
+      return tx.job.findUnique({
+        where: { id: jobId },
+        include: {
+          company: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              logoUrl: true,
+              location: true,
+            },
           },
-        },
-        tags: {
-          include: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
+          tags: {
+            include: {
+              tag: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
               },
             },
           },
-        },
-        _count: {
-          select: {
-            applications: true,
-            bookmarks: true,
+          _count: {
+            select: {
+              applications: true,
+              bookmarks: true,
+            },
           },
         },
-      },
+      });
     });
 
     return NextResponse.json(
       {
         data: {
           ...updatedJob,
-          tags: updatedJob.tags.map((item) => item.tag),
+          tags: updatedJob?.tags.map((item) => item.tag) ?? [],
         },
       },
       { status: 200 }

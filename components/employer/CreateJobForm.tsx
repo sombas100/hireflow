@@ -40,6 +40,7 @@ export default function CreateJobForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const selectedCompany = useMemo(
     () => companies.find((company) => company.id === companyId),
@@ -91,6 +92,20 @@ export default function CreateJobForm({
       const data = await res.json();
 
       if (!res.ok) {
+        if (data?.issues) {
+          const formattedErrors: Record<string, string> = {};
+
+          data.issues.forEach((issue: { path: string[]; message: string }) => {
+            const field = issue.path?.[0];
+            if (field) {
+              formattedErrors[field] = issue.message;
+            }
+          });
+
+          setErrors(formattedErrors);
+          return;
+        }
+
         throw new Error(data?.error || "Failed to create job");
       }
 
@@ -210,6 +225,9 @@ export default function CreateJobForm({
             required
           />
         </div>
+        {errors.description && (
+          <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2">
           <div>

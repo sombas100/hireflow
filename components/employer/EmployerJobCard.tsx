@@ -38,7 +38,7 @@ export default function EmployerJobCard({ job }: EmployerJobCardProps) {
       setIsDeleting(false);
     }
   };
-
+  console.log("Delete job ID:", job.id);
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4">

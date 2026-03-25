@@ -49,6 +49,7 @@ export const UpdateJobSchema = z.object({
 
   isPublished: z.boolean().optional(),
   expiresAt: z.string().datetime().optional().nullable(),
+  tagIds: z.array(z.string().min(1)).optional(),
 });
 
 export const JobsQuerySchema = z.object({
