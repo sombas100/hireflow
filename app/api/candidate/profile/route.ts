@@ -72,6 +72,7 @@ export async function PATCH(request: NextRequest) {
           githubUrl: data.githubUrl === "" ? null : data.githubUrl,
           linkedinUrl: data.linkedinUrl === "" ? null : data.linkedinUrl,
           resumeUrl: data.resumeUrl === "" ? null : data.resumeUrl,
+          resumeName: data.resumeName,
         };
     
         const existingProfile = await prisma.candidateProfile.findUnique({
