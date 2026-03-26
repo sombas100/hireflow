@@ -1,9 +1,10 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from 'next-auth/providers/google'
+import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs"; 
+import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -19,36 +20,40 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           prompt: "consent",
           access_type: "offline",
           response_type: "code",
-        }
-      }
+        },
+      },
     }),
+
     Credentials({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        role: { label: "Role", type: "text" }, 
+        role: { label: "Role", type: "text" },
       },
 
       async authorize(credentials) {
-       
-        const email = typeof credentials?.email === "string"
-          ? credentials.email.toLowerCase().trim()
-          : "";
+        const email =
+          typeof credentials?.email === "string"
+            ? credentials.email.toLowerCase().trim()
+            : "";
 
-        const password = typeof credentials?.password === "string"
-          ? credentials.password
-          : "";
-
-        const role = typeof credentials?.role === "string"
-          ? credentials.role
-          : undefined;
+        const password =
+          typeof credentials?.password === "string"
+            ? credentials.password
+            : "";
 
         if (!email || !password) return null;
 
         const user = await prisma.user.findUnique({
           where: { email },
-          select: { id: true, name: true, passwordHash: true, role: true, email: true },
+          select: {
+            id: true,
+            name: true,
+            passwordHash: true,
+            role: true,
+            email: true,
+          },
         });
 
         if (!user?.passwordHash) return null;
@@ -56,46 +61,83 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const isMatch = await bcrypt.compare(password, user.passwordHash);
         if (!isMatch) return null;
 
-        
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role, 
+          role: user.role,
         };
       },
     }),
   ],
+
   pages: {
-    signIn: '/login'
+    signIn: "/login",
   },
+
   callbacks: {
-  async jwt({ token, user }) {
-    if (user) {
-      token.id = (user as any).id;
-    }
-    if (token.email) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email: token.email },
-        select: { id: true, role: true },
-      });
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && user.email) {
+        const cookieStore = await cookies();
+        const selectedRole = cookieStore.get("selected_role")?.value;
 
-      if (dbUser) {
-        token.id = dbUser.id;
-        token.role = dbUser.role;
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email },
+          select: {
+            id: true,
+            role: true,
+          },
+        });
+
+        if (
+          existingUser &&
+          selectedRole &&
+          (selectedRole === "CANDIDATE" || selectedRole === "EMPLOYER")
+        ) {
+          // Only update role if the user is effectively still on default candidate
+          // and selected employer during first signup/login flow.
+          if (
+            existingUser.role === "CANDIDATE" &&
+            selectedRole === "EMPLOYER"
+          ) {
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: { role: "EMPLOYER" },
+            });
+          }
+        }
       }
-    }
 
-    return token;
+      return true;
+    },
+
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = (user as any).id;
+      }
+
+      if (token.email) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email },
+          select: { id: true, role: true },
+        });
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+        }
+      }
+
+      return token;
+    },
+
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+      }
+
+      return session;
+    },
   },
-
-  session({ session, token }) {
-    if (session.user) {
-      (session.user as any).id = token.id;
-      (session.user as any).role = token.role;
-    }
-
-    return session;
-  },
-},
 });
