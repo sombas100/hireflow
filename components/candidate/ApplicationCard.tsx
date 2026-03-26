@@ -120,8 +120,8 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
 
         {(application.job.salaryMin || application.job.salaryMax) && (
           <p className="text-sm font-medium text-gray-800">
-            {application.job.currency || "GBP"} {application.job.salaryMin ?? 0}{" "}
-            - {application.job.salaryMax ?? 0}
+            {application.job.currency || "GBP"} £
+            {application.job.salaryMin ?? 0} - £{application.job.salaryMax ?? 0}
             {application.job.salaryPeriod
               ? ` / ${application.job.salaryPeriod.toLowerCase()}`
               : ""}

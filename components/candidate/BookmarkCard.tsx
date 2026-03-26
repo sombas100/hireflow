@@ -79,7 +79,7 @@ export default function BookmarkCard({ bookmark }: BookmarkCardProps) {
 
         {(bookmark.job.salaryMin || bookmark.job.salaryMax) && (
           <p className="text-sm font-medium text-gray-800">
-            {bookmark.job.currency || "GBP"} {bookmark.job.salaryMin ?? 0} -{" "}
+            {bookmark.job.currency || "GBP"} £{bookmark.job.salaryMin ?? 0} - £
             {bookmark.job.salaryMax ?? 0}
             {bookmark.job.salaryPeriod
               ? ` / ${bookmark.job.salaryPeriod.toLowerCase()}`

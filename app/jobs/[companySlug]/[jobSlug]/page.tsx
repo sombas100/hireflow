@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import ApplyToJobCard from "@/components/jobs/ApplyToJobCard";
+import { prisma } from "@/lib/prisma";
+import BookmarkJobButton from "@/components/jobs/BookmarkJobButton";
 
 type JobDetailsPageProps = {
   params: Promise<{
@@ -30,11 +32,51 @@ async function getJob(companySlug: string, jobSlug: string) {
   return res.json();
 }
 
+async function getBookmarkStatus(
+  userId?: string,
+  role?: string,
+  jobId?: string,
+) {
+  if (!userId || !jobId || (role !== "CANDIDATE" && role !== "ADMIN")) {
+    return false;
+  }
+
+  const bookmark = await prisma.bookmark.findFirst({
+    where: {
+      userId,
+      jobId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  return Boolean(bookmark);
+}
+
+async function getCandidateResume(userId?: string, role?: string) {
+  if (!userId || (role !== "CANDIDATE" && role !== "ADMIN")) {
+    return null;
+  }
+
+  const profile = await prisma.candidateProfile.findUnique({
+    where: { userId },
+    select: {
+      resumeUrl: true,
+      resumeName: true,
+    },
+  });
+
+  return profile;
+}
+
 export default async function JobDetailsPage({ params }: JobDetailsPageProps) {
   const session = await auth();
   const authenticatedUser = session?.user;
   const userRole = (authenticatedUser as any)?.role as string | undefined;
   const isAuthenticated = Boolean(authenticatedUser);
+  const userId = (authenticatedUser as any)?.id as string | undefined;
+  const candidateResume = await getCandidateResume(userId, userRole);
   const { companySlug, jobSlug } = await params;
 
   const response = await getJob(companySlug, jobSlug);
@@ -44,6 +86,7 @@ export default async function JobDetailsPage({ params }: JobDetailsPageProps) {
   }
 
   const job = response.data;
+  const isBookmarked = await getBookmarkStatus(userId, userRole, job.id);
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10">
@@ -223,12 +266,21 @@ export default async function JobDetailsPage({ params }: JobDetailsPageProps) {
                 </div>
               </div>
 
+              <BookmarkJobButton
+                jobId={job.id}
+                isAuthenticated={isAuthenticated}
+                userRole={userRole}
+                isBookmarked={isBookmarked}
+              />
+
               <ApplyToJobCard
                 jobId={job.id}
                 userRole={userRole}
                 isAuthenticated={isAuthenticated}
                 applyUrl={job.applyUrl}
                 applyEmail={job.applyEmail}
+                savedResumeUrl={candidateResume?.resumeUrl || ""}
+                savedResumeName={candidateResume?.resumeName || ""}
               />
             </aside>
           </div>

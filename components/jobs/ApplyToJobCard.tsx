@@ -9,6 +9,8 @@ type ApplyToJobCardProps = {
   isAuthenticated: boolean;
   applyUrl?: string | null;
   applyEmail?: string | null;
+  savedResumeUrl?: string;
+  savedResumeName?: string;
 };
 
 export default function ApplyToJobCard({
@@ -17,9 +19,12 @@ export default function ApplyToJobCard({
   isAuthenticated,
   applyUrl,
   applyEmail,
+  savedResumeUrl = "",
+  savedResumeName = "",
 }: ApplyToJobCardProps) {
   const [coverLetter, setCoverLetter] = useState("");
-  const [resumeUrl, setResumeUrl] = useState("");
+  const [resumeUrl, setResumeUrl] = useState(savedResumeUrl);
+  const [useSavedResume, setUseSavedResume] = useState(Boolean(savedResumeUrl));
   const [isApplying, setIsApplying] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -33,6 +38,8 @@ export default function ApplyToJobCard({
       setIsApplying(true);
       setMessage("");
 
+      const finalResumeUrl = useSavedResume ? savedResumeUrl : resumeUrl;
+
       const res = await fetch("/api/applications", {
         method: "POST",
         headers: {
@@ -40,8 +47,8 @@ export default function ApplyToJobCard({
         },
         body: JSON.stringify({
           jobId,
-          coverLetter: coverLetter || undefined,
-          resumeUrl: resumeUrl || undefined,
+          coverLetter: coverLetter.trim() || undefined,
+          resumeUrl: finalResumeUrl?.trim() || undefined,
         }),
       });
 
@@ -53,7 +60,10 @@ export default function ApplyToJobCard({
 
       setMessage("Application submitted successfully.");
       setCoverLetter("");
-      setResumeUrl("");
+
+      if (!useSavedResume) {
+        setResumeUrl("");
+      }
     } catch (error: any) {
       console.error(error);
       setMessage(error.message || "Something went wrong while applying.");
@@ -107,27 +117,61 @@ export default function ApplyToJobCard({
             />
           </div>
 
-          <div>
-            <label
-              htmlFor="resumeUrl"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              Resume URL
-            </label>
-            <input
-              id="resumeUrl"
-              type="url"
-              value={resumeUrl}
-              onChange={(e) => setResumeUrl(e.target.value)}
-              placeholder="https://example.com/resume.pdf"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500"
-            />
-          </div>
+          {savedResumeUrl && (
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <label className="flex items-start gap-3 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={useSavedResume}
+                  onChange={(e) => setUseSavedResume(e.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>
+                  Use saved resume
+                  {savedResumeName && (
+                    <span className="ml-1 text-gray-500">
+                      ({savedResumeName})
+                    </span>
+                  )}
+                </span>
+              </label>
+
+              <div className="mt-2">
+                <a
+                  href={savedResumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  View saved resume
+                </a>
+              </div>
+            </div>
+          )}
+
+          {!useSavedResume && (
+            <div>
+              <label
+                htmlFor="resumeUrl"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
+                Resume URL
+              </label>
+              <input
+                id="resumeUrl"
+                type="url"
+                value={resumeUrl}
+                onChange={(e) => setResumeUrl(e.target.value)}
+                placeholder="https://example.com/resume.pdf"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={isApplying}
-            className="rounded-lg bg-gray-900 px-5 py-2.5 cursor-pointer text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+            className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
           >
             {isApplying ? "Applying..." : "Submit Application"}
           </button>
