@@ -1,35 +1,19 @@
 import JobCard from "./JobCard";
-
-type Job = {
-  id: string;
-  title: string;
-  slug: string;
-  location?: string | null;
-  isRemote: boolean;
-  jobType: string;
-  workplaceType: string;
-  salaryMin?: number | null;
-  salaryMax?: number | null;
-  salaryPeriod?: string | null;
-  currency?: string | null;
-  company: {
-    name: string;
-    slug: string;
-    logoUrl?: string | null;
-    location?: string | null;
-  };
-  tags: {
-    id: string;
-    name: string;
-    slug: string;
-  }[];
-};
+import type { Job } from "@/interfaces/job";
 
 type JobListProps = {
   jobs: Job[];
+  isAuthenticated: boolean;
+  userRole?: string;
+  bookmarkedJobIds: string[];
 };
 
-export default function JobList({ jobs }: JobListProps) {
+export default function JobList({
+  jobs,
+  isAuthenticated,
+  userRole,
+  bookmarkedJobIds,
+}: JobListProps) {
   if (!jobs || jobs.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
@@ -44,7 +28,13 @@ export default function JobList({ jobs }: JobListProps) {
   return (
     <div className="grid gap-4">
       {jobs.map((job) => (
-        <JobCard key={job.id} job={job} />
+        <JobCard
+          key={job.id}
+          job={job}
+          isAuthenticated={isAuthenticated}
+          userRole={userRole}
+          isBookmarked={bookmarkedJobIds.includes(job.id)}
+        />
       ))}
     </div>
   );

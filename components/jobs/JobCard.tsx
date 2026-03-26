@@ -1,45 +1,43 @@
-import { Tag } from "@/interfaces/job";
 import Link from "next/link";
-
-type Job = {
-  id: string;
-  title: string;
-  slug: string;
-  location?: string | null;
-  isRemote: boolean;
-  jobType: string;
-  workplaceType: string;
-  salaryMin?: number | null;
-  salaryMax?: number | null;
-  salaryPeriod?: string | null;
-  currency?: string | null;
-  company: {
-    name: string;
-    slug: string;
-    logoUrl?: string | null;
-    location?: string | null;
-  };
-  tags: {
-    id: string;
-    name: string;
-    slug: string;
-  }[];
-};
+import type { Job } from "@/interfaces/job";
+import JobBookmarkButton from "./JobBookmarkButton";
 
 type JobCardProps = {
   job: Job;
+  isAuthenticated: boolean;
+  userRole?: string;
+  isBookmarked: boolean;
 };
 
-export default function JobCard({ job }: JobCardProps) {
+export default function JobCard({
+  job,
+  isAuthenticated,
+  userRole,
+  isBookmarked,
+}: JobCardProps) {
+  const canBookmark =
+    isAuthenticated && (userRole === "CANDIDATE" || userRole === "ADMIN");
+
   return (
-    <Link
-      href={`/jobs/${job.company.slug}/${job.slug}`}
-      className="block rounded-xl border border-gray-200 bg-white hover:border-primary p-5 shadow-sm transition hover:shadow-md"
-    >
+    <div className="rounded-xl border border-gray-200 hover:border-primary bg-white p-5 shadow-sm transition hover:shadow-md">
       <div className="flex flex-col gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">{job.title}</h2>
-          <p className="mt-1 text-sm text-gray-600">{job.company.name}</p>
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <Link
+              href={`/jobs/${job.company.slug}/${job.slug}`}
+              className="text-xl font-semibold text-gray-900 hover:underline"
+            >
+              {job.title}
+            </Link>
+            <p className="mt-1 text-sm text-gray-600">{job.company.name}</p>
+          </div>
+
+          {canBookmark && (
+            <JobBookmarkButton
+              jobId={job.id}
+              initialBookmarked={isBookmarked}
+            />
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2 text-sm text-gray-600">
@@ -69,7 +67,7 @@ export default function JobCard({ job }: JobCardProps) {
 
         {job.tags.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {job.tags.map((tag: Tag) => (
+            {job.tags.map((tag) => (
               <span
                 key={tag.id}
                 className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
@@ -80,6 +78,6 @@ export default function JobCard({ job }: JobCardProps) {
           </div>
         )}
       </div>
-    </Link>
+    </div>
   );
 }
