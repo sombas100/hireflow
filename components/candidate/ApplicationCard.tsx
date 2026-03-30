@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Job } from "@/interfaces/job";
+import { toast } from "react-toastify";
 
 type Application = {
   id: string;
@@ -49,6 +50,11 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   const handleWithdraw = async () => {
+    const confirm = window.confirm(
+      "Are you sure you want to withdraw this application?",
+    );
+
+    if (!confirm) return;
     try {
       setIsWithdrawing(true);
 
@@ -60,6 +66,7 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
         throw new Error("Failed to withdraw application");
       }
 
+      toast.success("Your application has been withdrawn");
       router.refresh();
     } catch (error) {
       console.error(error);

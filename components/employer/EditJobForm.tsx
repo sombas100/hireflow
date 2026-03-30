@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Company } from "@/interfaces/company";
 import type { Job, Tag } from "@/interfaces/job";
+import { toast } from "react-toastify";
 
 type EditJobFormProps = {
   job: Job;
@@ -104,12 +105,12 @@ export default function EditJobForm({
         throw new Error(data?.error || "Failed to update job");
       }
 
-      setMessage("Job updated successfully.");
+      toast.success("Job updated successfully.");
       router.push("/employer/jobs");
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Something went wrong while updating the job.");
+      toast.error("Something went wrong while updating the job.");
     } finally {
       setIsSubmitting(false);
     }
@@ -274,11 +275,8 @@ export default function EditJobForm({
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
             >
               <option value="">Select level</option>
-              <option value="INTERN">Intern</option>
+              <option value="INTERN">Entry-Level / Intern</option>
               <option value="JUNIOR">Junior</option>
-              <option value="MID">Mid</option>
-              <option value="SENIOR">Senior</option>
-              <option value="LEAD">Lead</option>
             </select>
           </div>
         </div>

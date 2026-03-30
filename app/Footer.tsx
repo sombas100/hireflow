@@ -22,7 +22,7 @@ const Footer = () => {
           Hire<span className="text-primary">Flow</span>
         </Link>
         <span className="text-gray-500 text-xs mb-4">
-          Find Junior positions
+          Find Junior tech roles
         </span>
         <p className="text-sm text-gray-500">
           © 2026 Hireflow | Built & Designed in London UK by Corey Clarke.

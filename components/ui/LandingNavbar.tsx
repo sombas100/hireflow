@@ -10,7 +10,7 @@ const LandingNavbar = async () => {
           <Heading as="h1" size="6" className="tracking-widest">
             Hire<span className="text-primary">Flow</span>
           </Heading>
-          <span className="text-gray-500 text-xs">Find Junior positions</span>
+          <span className="text-gray-500 text-xs">Find Junior tech roles</span>
         </Link>
 
         {/* Desktop nav links */}

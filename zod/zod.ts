@@ -15,7 +15,7 @@ export const CreateJobSchema = z.object({
   benefits: z.string().optional(),
   jobType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN", "TEMP", "FREELANCE"]),
   workplaceType: z.enum(["ONSITE", "REMOTE", "HYBRID"]),
-  experienceLevel: z.enum(["INTERN", "JUNIOR", "MID", "SENIOR", "LEAD"]).optional(),
+  experienceLevel: z.enum(["INTERN", "JUNIOR"]).optional(),
   location: z.string().optional(),
   isRemote: z.boolean().optional(),
   salaryMin: z.number().int().nonnegative().optional(),
@@ -42,7 +42,7 @@ export const UpdateJobSchema = z.object({
   workplaceType: z.enum(["ONSITE", "REMOTE", "HYBRID"]).optional(),
 
   experienceLevel: z
-    .enum(["INTERN", "JUNIOR", "MID", "SENIOR", "LEAD"])
+    .enum(["INTERN", "JUNIOR"])
     .optional(),
 
   location: z.string().optional(),

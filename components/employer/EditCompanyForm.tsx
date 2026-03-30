@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Company } from "@/interfaces/company";
+import { toast } from "react-toastify";
 
 type EditCompanyFormProps = {
   company: Company;
@@ -61,12 +62,12 @@ export default function EditCompanyForm({ company }: EditCompanyFormProps) {
         throw new Error(data?.error || "Failed to update company");
       }
 
-      setMessage("Company updated successfully.");
+      toast.success("Company updated successfully.");
       router.push("/employer/companies");
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Something went wrong while updating the company.");
+      toast.error("Something went wrong while updating the company.");
     } finally {
       setIsSubmitting(false);
     }

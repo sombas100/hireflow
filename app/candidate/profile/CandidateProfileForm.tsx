@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 type CandidateProfile = {
   id?: string;
@@ -75,10 +76,10 @@ export default function CandidateProfileForm({
         throw new Error(data?.error || "Failed to save profile");
       }
 
-      setMessage("Profile saved successfully.");
+      toast.success("Profile saved");
     } catch (error) {
       console.error(error);
-      setMessage("Something went wrong while saving your profile.");
+      toast.error("Something went wrong while saving your profile.");
     } finally {
       setIsSaving(false);
     }
@@ -107,10 +108,10 @@ export default function CandidateProfileForm({
 
       setResumeFileName(data.data.fileName);
       setResumeUrl(data.data.url);
-      setMessage("Resume uploaded successfully.");
+      toast.success("Your resume has been uploaded");
     } catch (error: any) {
       console.error(error);
-      setMessage(error.message || "Failed to upload resume.");
+      toast.error(error.message || "Failed to upload resume.");
     } finally {
       setIsUploadingResume(false);
     }

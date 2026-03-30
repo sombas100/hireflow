@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Company } from "@/interfaces/company";
+import { toast } from "react-toastify";
 
 type EmployerCompanyCardProps = {
   company: Company;
@@ -37,10 +38,11 @@ export default function EmployerCompanyCard({
         throw new Error(data?.error || "Failed to delete company");
       }
 
+      toast.success("Company has successfully been deleted");
       router.refresh();
     } catch (error: any) {
       console.error(error);
-      setMessage(error.message || "Something went wrong while deleting.");
+      toast.error(error.message || "Something went wrong while deleting.");
     } finally {
       setIsDeleting(false);
     }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Job } from "@/interfaces/job";
+import { toast } from "react-toastify";
 
 type EmployerJobCardProps = {
   job: Job;
@@ -31,6 +32,7 @@ export default function EmployerJobCard({ job }: EmployerJobCardProps) {
         throw new Error("Failed to delete job");
       }
 
+      toast.success("Job successfully deleted");
       router.refresh();
     } catch (error) {
       console.error(error);

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 export default function CreateCompanyForm() {
   const router = useRouter();
@@ -47,12 +48,12 @@ export default function CreateCompanyForm() {
       setDescription("");
       setWebsiteUrl("");
       setLocation("");
-      setMessage("Company created successfully.");
+      toast.success("Company created successfully.");
 
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Something went wrong while creating the company.");
+      toast.error("Something went wrong while creating the company.");
     } finally {
       setIsSubmitting(false);
     }
