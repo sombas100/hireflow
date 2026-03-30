@@ -5,3 +5,9 @@ export const navLinks = [
     { name: "My Applications", to: '/candidate/applications' },
     { name: "Bookmarks", to: '/candidate/bookmarks' },
 ]
+export const landingNavLinks = [
+    { name: "About", to: '/about' },
+    { name: "Pricing", to: '/pricing' },
+    
+]
+

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import EmployerSidebar from "@/components/employer/EmployerSidebar";
+import MainFooter from "@/components/ui/MainFooter";
 
 type EmployerLayoutProps = {
   children: React.ReactNode;
@@ -29,6 +30,7 @@ export default async function EmployerLayout({
 
         <main className="flex-1 p-6 md:p-8">{children}</main>
       </div>
+      <MainFooter />
     </div>
   );
 }

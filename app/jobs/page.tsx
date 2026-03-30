@@ -4,6 +4,7 @@ import JobFilters from "@/components/jobs/JobFilters";
 import JobList from "@/components/jobs/JobList";
 import Pagination from "@/components/shared/Pagination";
 import Navbar from "../Navbar";
+import MainFooter from "@/components/ui/MainFooter";
 
 type JobsPageProps = {
   searchParams: Promise<{
@@ -120,6 +121,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           </div>
         </div>
       </main>
+      <MainFooter />
     </>
   );
 }

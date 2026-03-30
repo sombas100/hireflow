@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import ApplicationList from "@/components/candidate/ApplicationList";
 import { Job } from "@/interfaces/job";
 import Navbar from "@/app/Navbar";
+import MainFooter from "@/components/ui/MainFooter";
 
 type Application = {
   id: string;
@@ -109,6 +110,7 @@ export default async function CandidateApplicationsPage() {
           <ApplicationList applications={applications} />
         </div>
       </main>
+      <MainFooter />
     </>
   );
 }

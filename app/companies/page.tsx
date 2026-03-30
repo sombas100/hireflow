@@ -2,6 +2,7 @@ import CompanyFilters from "@/components/companies/CompanyFilters";
 import CompanyList from "@/components/companies/CompanyList";
 import Pagination from "@/components/shared/Pagination";
 import Navbar from "../Navbar";
+import MainFooter from "@/components/ui/MainFooter";
 
 type CompaniesPageProps = {
   searchParams: Promise<{
@@ -79,6 +80,7 @@ export default async function CompaniesPage({
           </div>
         </div>
       </main>
+      <MainFooter />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Job } from "@/interfaces/job";
 import Navbar from "@/app/Navbar";
+import MainFooter from "@/components/ui/MainFooter";
 
 type Bookmark = {
   id: string;
@@ -101,6 +102,7 @@ export default async function CandidateBookmarksPage() {
           <BookmarkList bookmarks={bookmarks} />
         </div>
       </main>
+      <MainFooter />
     </>
   );
 }

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import CandidateProfileForm from "./CandidateProfileForm";
 import Navbar from "@/app/Navbar";
+import MainFooter from "@/components/ui/MainFooter";
 
 type CandidateProfile = {
   id?: string;
@@ -81,6 +82,7 @@ export default async function CandidateProfilePage() {
           <CandidateProfileForm profile={profile} />
         </div>
       </main>
+      <MainFooter />
     </>
   );
 }
