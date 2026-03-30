@@ -31,10 +31,19 @@ export default function CreateJobForm({
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [requirements, setRequirements] = useState("");
+  const [benefits, setBenefits] = useState("");
   const [jobType, setJobType] = useState("FULL_TIME");
   const [workplaceType, setWorkplaceType] = useState("ONSITE");
+  const [experienceLevel, setExperienceLevel] = useState("");
   const [location, setLocation] = useState("");
   const [isRemote, setIsRemote] = useState(false);
+  const [salaryMin, setSalaryMin] = useState("");
+  const [salaryMax, setSalaryMax] = useState("");
+  const [salaryPeriod, setSalaryPeriod] = useState("");
+  const [currency, setCurrency] = useState("GBP");
+  const [applyUrl, setApplyUrl] = useState("");
+  const [applyEmail, setApplyEmail] = useState("");
   const [isPublished, setIsPublished] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
@@ -69,6 +78,7 @@ export default function CreateJobForm({
     try {
       setIsSubmitting(true);
       setMessage("");
+      setErrors({});
 
       const res = await fetch("/api/employer/jobs", {
         method: "POST",
@@ -78,12 +88,21 @@ export default function CreateJobForm({
         body: JSON.stringify({
           companyId,
           title,
-          slug,
+          slug: slugify(slug),
           description,
+          requirements: requirements || undefined,
+          benefits: benefits || undefined,
           jobType,
           workplaceType,
-          location,
+          experienceLevel: experienceLevel || undefined,
+          location: location || undefined,
           isRemote,
+          salaryMin: salaryMin ? Number(salaryMin) : undefined,
+          salaryMax: salaryMax ? Number(salaryMax) : undefined,
+          salaryPeriod: salaryPeriod || undefined,
+          currency: currency || undefined,
+          applyUrl: applyUrl || undefined,
+          applyEmail: applyEmail || undefined,
           isPublished,
           tagIds: selectedTagIds,
         }),
@@ -110,7 +129,6 @@ export default function CreateJobForm({
       }
 
       setMessage("Job created successfully.");
-
       router.push("/employer/jobs");
       router.refresh();
     } catch (error) {
@@ -185,6 +203,9 @@ export default function CreateJobForm({
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
             required
           />
+          {errors.title && (
+            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+          )}
         </div>
 
         <div>
@@ -206,6 +227,9 @@ export default function CreateJobForm({
           <p className="mt-2 text-xs text-gray-500">
             This will be used in the job URL.
           </p>
+          {errors.slug && (
+            <p className="mt-1 text-sm text-red-600">{errors.slug}</p>
+          )}
         </div>
 
         <div>
@@ -224,12 +248,44 @@ export default function CreateJobForm({
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
             required
           />
+          {errors.description && (
+            <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+          )}
         </div>
-        {errors.description && (
-          <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-        )}
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div>
+          <label
+            htmlFor="requirements"
+            className="mb-2 block text-sm font-medium text-gray-700"
+          >
+            Requirements
+          </label>
+          <textarea
+            id="requirements"
+            value={requirements}
+            onChange={(e) => setRequirements(e.target.value)}
+            rows={5}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="benefits"
+            className="mb-2 block text-sm font-medium text-gray-700"
+          >
+            Benefits
+          </label>
+          <textarea
+            id="benefits"
+            value={benefits}
+            onChange={(e) => setBenefits(e.target.value)}
+            rows={5}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
+          />
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3">
           <div>
             <label
               htmlFor="jobType"
@@ -270,6 +326,28 @@ export default function CreateJobForm({
               <option value="HYBRID">Hybrid</option>
             </select>
           </div>
+
+          <div>
+            <label
+              htmlFor="experienceLevel"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Experience Level
+            </label>
+            <select
+              id="experienceLevel"
+              value={experienceLevel}
+              onChange={(e) => setExperienceLevel(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
+            >
+              <option value="">Select level</option>
+              <option value="INTERN">Intern</option>
+              <option value="JUNIOR">Junior</option>
+              <option value="MID">Mid</option>
+              <option value="SENIOR">Senior</option>
+              <option value="LEAD">Lead</option>
+            </select>
+          </div>
         </div>
 
         <div>
@@ -287,6 +365,89 @@ export default function CreateJobForm({
             placeholder="London"
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
           />
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-4">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Salary Min
+            </label>
+            <input
+              type="number"
+              value={salaryMin}
+              onChange={(e) => setSalaryMin(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Salary Max
+            </label>
+            <input
+              type="number"
+              value={salaryMax}
+              onChange={(e) => setSalaryMax(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Salary Period
+            </label>
+            <select
+              value={salaryPeriod}
+              onChange={(e) => setSalaryPeriod(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
+            >
+              <option value="">Select period</option>
+              <option value="YEAR">Year</option>
+              <option value="MONTH">Month</option>
+              <option value="HOUR">Hour</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Currency
+            </label>
+            <input
+              type="text"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+              placeholder="GBP"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase outline-none focus:border-gray-500"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Apply URL
+            </label>
+            <input
+              type="url"
+              value={applyUrl}
+              onChange={(e) => setApplyUrl(e.target.value)}
+              placeholder="https://company.com/jobs/apply"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Apply Email
+            </label>
+            <input
+              type="email"
+              value={applyEmail}
+              onChange={(e) => setApplyEmail(e.target.value)}
+              placeholder="jobs@company.com"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
+            />
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-6">

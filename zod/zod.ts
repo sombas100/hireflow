@@ -9,14 +9,23 @@ export const userScehma = z.object({
 export const CreateJobSchema = z.object({
   companyId: z.string().min(1),
   title: z.string().min(3),
-  slug: z.string().min(3), 
+  slug: z.string().min(3),
   description: z.string().min(10),
+  requirements: z.string().optional(),
+  benefits: z.string().optional(),
   jobType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN", "TEMP", "FREELANCE"]),
   workplaceType: z.enum(["ONSITE", "REMOTE", "HYBRID"]),
+  experienceLevel: z.enum(["INTERN", "JUNIOR", "MID", "SENIOR", "LEAD"]).optional(),
   location: z.string().optional(),
-  isRemote: z.boolean().optional().default(false),
+  isRemote: z.boolean().optional(),
+  salaryMin: z.number().int().nonnegative().optional(),
+  salaryMax: z.number().int().nonnegative().optional(),
+  salaryPeriod: z.enum(["YEAR", "MONTH", "HOUR"]).optional(),
+  currency: z.string().length(3).optional(),
+  applyUrl: z.string().url().optional(),
+  applyEmail: z.string().email().optional(),
+  isPublished: z.boolean().optional(),
   tagIds: z.array(z.string().min(1)).optional().default([]),
-  isPublished: z.boolean().optional().default(false),
 });
 
 export const UpdateJobSchema = z.object({

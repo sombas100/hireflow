@@ -1,14 +1,28 @@
-import { PrismaClient, UserRole, JobType, WorkplaceType, ExperienceLevel, SalaryPeriod } from "../app/generated/prisma/client";
+import "dotenv/config";
+import {
+  PrismaClient,
+  UserRole,
+  JobType,
+  WorkplaceType,
+  ExperienceLevel,
+  SalaryPeriod,
+} from "../app/generated/prisma/client";
 import { faker } from "@faker-js/faker";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-const prisma = new PrismaClient({ adapter });
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set");
+}
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString: process.env.DATABASE_URL,
+  }),
+});
 
 async function main() {
   console.log("🌱 Seeding database...");
 
-  // ---- 1. Create Employers ----
   const employers = await Promise.all(
     Array.from({ length: 3 }).map(() =>
       prisma.user.create({
@@ -21,13 +35,15 @@ async function main() {
     )
   );
 
-  // ---- 2. Create Companies ----
   const companies = await Promise.all(
-    employers.map((employer, index) =>
-      prisma.company.create({
+    employers.map((employer, index) => {
+      const companyName = faker.company.name();
+      return prisma.company.create({
         data: {
-          name: faker.company.name(),
-          slug: faker.helpers.slugify(`company-${index}-${faker.company.name()}`).toLowerCase(),
+          name: companyName,
+          slug: faker.helpers
+            .slugify(`company-${index}-${companyName}`)
+            .toLowerCase(),
           description: faker.company.catchPhrase(),
           websiteUrl: faker.internet.url(),
           location: faker.location.city(),
@@ -35,62 +51,63 @@ async function main() {
             connect: { id: employer.id },
           },
         },
-      })
-    )
+      });
+    })
   );
 
-  // ---- 3. Create Tags ----
   const tagNames = [
-  "JavaScript",
-  "TypeScript",
-  "Python",
-  "Java",
-  "C#",
-  "PHP",
-  "Go",
-  "Rust",
-  "Ruby",
-  "Kotlin",
-  "Swift",
-  "C++",
-  "React",
-  "Next.js",
-  "Vue",
-  "Angular",
-  "Node.js",
-  "Express",
-  "Django",
-  "Laravel",
-  "Spring Boot",
-  ".NET",
-  "PostgreSQL",
-  "MySQL",
-  "MongoDB",
-  "Redis",
-  "Docker",
-  "Kubernetes",
-  "AWS",
-  "Azure",
-  "GCP",
-  "GraphQL",
-  "REST API",
-  "Tailwind CSS",
-  "HTML",
-  "CSS",
-  "Git",
-  "GitHub",
-  "CI/CD",
-  "Linux",
-  "Terraform",
-  "Firebase",
-  "Prisma",
-  "Sequelize",
-];
+    "JavaScript",
+    "TypeScript",
+    "Python",
+    "Java",
+    "C#",
+    "PHP",
+    "Go",
+    "Rust",
+    "Ruby",
+    "Kotlin",
+    "Swift",
+    "C++",
+    "React",
+    "Next.js",
+    "Vue",
+    "Angular",
+    "Node.js",
+    "Express",
+    "Django",
+    "Laravel",
+    "Spring Boot",
+    ".NET",
+    "PostgreSQL",
+    "MySQL",
+    "MongoDB",
+    "Redis",
+    "Docker",
+    "Kubernetes",
+    "AWS",
+    "Azure",
+    "GCP",
+    "GraphQL",
+    "REST API",
+    "Tailwind CSS",
+    "HTML",
+    "CSS",
+    "Git",
+    "GitHub",
+    "CI/CD",
+    "Linux",
+    "Terraform",
+    "Firebase",
+    "Prisma",
+    "Sequelize",
+  ];
 
   const tags = await Promise.all(
     tagNames.map((name) =>
-      prisma.tag.create({
-        data: {
+      prisma.tag.upsert({
+        where: { slug: name.toLowerCase().replace(/\s+/g, "-") },
+        update: {},
+        create: {
           name,
           slug: name.toLowerCase().replace(/\s+/g, "-"),
         },
@@ -98,15 +115,17 @@ async function main() {
     )
   );
 
-  // ---- 4. Create Jobs ----
-  for (const company of companies) {
+  for (const [companyIndex, company] of companies.entries()) {
     for (let i = 0; i < 5; i++) {
       const randomTags = faker.helpers.arrayElements(tags, 3);
+      const jobTitle = faker.person.jobTitle();
 
       await prisma.job.create({
         data: {
-          title: faker.person.jobTitle(),
-          slug: faker.helpers.slugify(faker.person.jobTitle()).toLowerCase(),
+          title: jobTitle,
+          slug: faker.helpers
+            .slugify(`${jobTitle}-${companyIndex}-${i}-${Date.now()}`)
+            .toLowerCase(),
 
           description: faker.lorem.paragraphs(3),
           requirements: faker.lorem.paragraphs(2),
@@ -114,7 +133,9 @@ async function main() {
 
           jobType: faker.helpers.arrayElement(Object.values(JobType)),
           workplaceType: faker.helpers.arrayElement(Object.values(WorkplaceType)),
-          experienceLevel: faker.helpers.arrayElement(Object.values(ExperienceLevel)),
+          experienceLevel: faker.helpers.arrayElement(
+            Object.values(ExperienceLevel)
+          ),
 
           location: faker.location.city(),
           isRemote: faker.datatype.boolean(),
@@ -128,7 +149,7 @@ async function main() {
           publishedAt: new Date(),
 
           companyId: company.id,
-          createdById: employers[0].id,
+          createdById: employers[companyIndex].id,
 
           tags: {
             create: randomTags.map((tag) => ({
@@ -145,6 +166,7 @@ async function main() {
 
 main()
   .catch((e) => {
+    console.error("❌ Seed failed:");
     console.error(e);
     process.exit(1);
   })
