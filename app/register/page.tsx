@@ -5,23 +5,57 @@ import { Flex, Heading, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { toast } from "react-toastify";
-import GoogleOauthButton from "./GoogleOauthButton";
 
-const LoginPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const RegisterPage = () => {
   const [selectedRole, setSelectedRole] = useState<"CANDIDATE" | "EMPLOYER">(
     "CANDIDATE",
   );
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleCredentialsLogin = async (
-    e: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
       setIsSubmitting(true);
+      setErrors({});
+
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role: selectedRole,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data?.issues) {
+          const fieldErrors: Record<string, string> = {};
+
+          data.issues.forEach((issue: { path: string[]; message: string }) => {
+            const field = issue.path?.[0];
+            if (field) fieldErrors[field] = issue.message;
+          });
+
+          setErrors(fieldErrors);
+          toast.error("Please fix the highlighted fields.");
+          return;
+        }
+
+        throw new Error(data?.error || "Failed to register");
+      }
+
+      toast.success("Account created successfully.");
 
       const result = await signIn("credentials", {
         email,
@@ -30,21 +64,15 @@ const LoginPage = () => {
         redirect: false,
       });
 
-      if (!result) {
-        toast.error("Unable to sign in.");
+      if (result?.error) {
+        window.location.href = "/login";
         return;
       }
 
-      if (result.error) {
-        toast.error("Invalid email or password.");
-        return;
-      }
-
-      toast.success("Signed in successfully.");
       window.location.href = "/auth/redirect";
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Something went wrong while signing in.");
+      toast.error(error.message || "Something went wrong while registering.");
     } finally {
       setIsSubmitting(false);
     }
@@ -64,7 +92,7 @@ const LoginPage = () => {
         m="auto"
       >
         <form
-          onSubmit={handleCredentialsLogin}
+          onSubmit={handleRegister}
           className="flex w-full max-w-md flex-col items-center justify-center rounded-lg p-8 shadow-md shadow-zinc-600"
         >
           <Heading mb="1" as="h1" size="9" className="tracking-wide">
@@ -72,12 +100,12 @@ const LoginPage = () => {
           </Heading>
 
           <Text size="3" as="p" className="text-zinc-300">
-            Sign in and get started
+            Create your account
           </Text>
 
           <div className="mt-6 w-full">
             <p className="mb-3 text-sm font-medium text-zinc-300">
-              Continue as
+              Register as
             </p>
 
             <div className="grid grid-cols-2 gap-3">
@@ -108,7 +136,19 @@ const LoginPage = () => {
           </div>
 
           <Flex gap="1" mb="5" direction="column" width="100%" mt="6">
-            <label>Email Address</label>
+            <label>Full Name</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-2 w-full rounded-lg border p-2 focus:border-primary focus:outline-none"
+              placeholder="Your name"
+              required
+            />
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-400">{errors.name}</p>
+            )}
+
+            <label className="mt-3">Email Address</label>
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -117,6 +157,9 @@ const LoginPage = () => {
               placeholder="example@email.com"
               required
             />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+            )}
 
             <label className="mt-3">Password</label>
             <input
@@ -126,22 +169,23 @@ const LoginPage = () => {
               className="mt-2 w-full rounded-lg border p-2 focus:border-primary focus:outline-none"
               required
             />
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-400">{errors.password}</p>
+            )}
           </Flex>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mb-4 w-full cursor-pointer rounded-lg bg-white py-2 font-semibold text-gray-900 transition hover:bg-zinc-200 disabled:opacity-50"
+            className="w-full rounded-lg cursor-pointer bg-white py-2 font-semibold text-gray-900 transition hover:bg-zinc-200 disabled:opacity-50"
           >
-            {isSubmitting ? "Signing in..." : "Sign in with Email"}
+            {isSubmitting ? "Creating account..." : "Create Account"}
           </button>
 
-          <GoogleOauthButton role={selectedRole} />
-
           <p className="mt-6 text-sm text-zinc-400">
-            Don’t have an account?{" "}
-            <Link href="/register" className="text-primary hover:underline">
-              Create one
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary hover:underline">
+              Sign in
             </Link>
           </p>
         </form>
@@ -150,4 +194,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;
