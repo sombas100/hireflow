@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://your-domain.com"),
+  metadataBase: new URL("https://hireflowjobs.io"),
   title: {
     default: "HireFlow | Junior Developer Jobs",
     template: "%s | HireFlow",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     title: "HireFlow | Junior Developer Jobs",
     description:
       "A job board focused only on entry-level and junior developer roles.",
-    url: "https://your-domain.com",
+    url: "https://hireflowjobs.io",
     siteName: "HireFlow",
     type: "website",
   },

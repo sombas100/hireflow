@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://your-domain.com";
+  const baseUrl = "https://hireflowjobs.io";
 
   const jobs = await prisma.job.findMany({
     where: { isPublished: true },
