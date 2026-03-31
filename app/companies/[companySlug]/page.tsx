@@ -3,12 +3,73 @@ import { notFound } from "next/navigation";
 import { Job } from "@/interfaces/job";
 import { Tag } from "@/interfaces/job";
 import MainFooter from "@/components/ui/MainFooter";
+import type { Metadata } from "next";
 
 type CompanyDetailsPageProps = {
   params: Promise<{
     companySlug: string;
   }>;
 };
+
+async function getCompanyForMetadata(companySlug: string) {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/companies/${companySlug}`,
+    {
+      cache: "no-store",
+    },
+  );
+
+  if (res.status === 404) {
+    return null;
+  }
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch company metadata");
+  }
+
+  return res.json();
+}
+
+export async function generateMetadata({
+  params,
+}: CompanyDetailsPageProps): Promise<Metadata> {
+  const { companySlug } = await params;
+  const response = await getCompanyForMetadata(companySlug);
+
+  if (!response?.data) {
+    return {
+      title: "Company Not Found",
+      description: "This company could not be found on HireFlow.",
+    };
+  }
+
+  const company = response.data;
+
+  const title = `${company.name} Jobs | HireFlow`;
+  const description =
+    company.description?.slice(0, 155) ||
+    `Explore junior developer jobs at ${company.name} on HireFlow.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/companies/${company.slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `/companies/${company.slug}`,
+      siteName: "HireFlow",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 
 async function getCompany(companySlug: string) {
   const res = await fetch(

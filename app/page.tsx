@@ -1,8 +1,14 @@
 import { Flex, Text, Heading } from "@radix-ui/themes";
-import PrimaryButton from "@/components/ui/PrimaryButton";
+import type { Metadata } from "next";
 import Footer from "./Footer";
 import LandingNavbar from "@/components/ui/LandingNavbar";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "HireFlow | Junior Developer Jobs",
+  description:
+    "Find entry-level and junior developer jobs without fake senior requirements. HireFlow is built for first-tech-job candidates.",
+};
 
 const features = [
   {

@@ -5,6 +5,7 @@ import JobList from "@/components/jobs/JobList";
 import Pagination from "@/components/shared/Pagination";
 import Navbar from "../Navbar";
 import MainFooter from "@/components/ui/MainFooter";
+import type { Metadata } from "next";
 
 type JobsPageProps = {
   searchParams: Promise<{
@@ -14,6 +15,12 @@ type JobsPageProps = {
     workplace?: string;
     page?: string;
   }>;
+};
+
+export const metadata: Metadata = {
+  title: "Browse Junior Developer Jobs",
+  description:
+    "Browse entry-level and junior developer roles on HireFlow. Find frontend, backend, and full stack opportunities built for early-career developers.",
 };
 
 async function getJobs(searchParams: {

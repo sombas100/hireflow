@@ -3,12 +3,19 @@ import CompanyList from "@/components/companies/CompanyList";
 import Pagination from "@/components/shared/Pagination";
 import Navbar from "../Navbar";
 import MainFooter from "@/components/ui/MainFooter";
+import type { Metadata } from "next";
 
 type CompaniesPageProps = {
   searchParams: Promise<{
     q?: string;
     page?: string;
   }>;
+};
+
+export const metadata: Metadata = {
+  title: "Browse registered companies",
+  description:
+    "Browse through our list of companies to find your next junior tech role",
 };
 
 async function getCompanies(searchParams: { q?: string; page?: string }) {

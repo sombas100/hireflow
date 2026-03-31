@@ -6,6 +6,7 @@ import ApplyToJobCard from "@/components/jobs/ApplyToJobCard";
 import { prisma } from "@/lib/prisma";
 import BookmarkJobButton from "@/components/jobs/BookmarkJobButton";
 import MainFooter from "@/components/ui/MainFooter";
+import type { Metadata } from "next";
 
 type JobDetailsPageProps = {
   params: Promise<{
@@ -14,6 +15,65 @@ type JobDetailsPageProps = {
   }>;
 };
 
+async function getJobForMetadata(companySlug: string, jobSlug: string) {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/jobs/${companySlug}/${jobSlug}`,
+    {
+      cache: "no-store",
+    },
+  );
+
+  if (res.status === 404) {
+    return null;
+  }
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch job metadata");
+  }
+
+  return res.json();
+}
+
+export async function generateMetadata({
+  params,
+}: JobDetailsPageProps): Promise<Metadata> {
+  const { companySlug, jobSlug } = await params;
+  const response = await getJobForMetadata(companySlug, jobSlug);
+
+  if (!response?.data) {
+    return {
+      title: "Job Not Found",
+      description: "This job could not be found on HireFlow.",
+    };
+  }
+
+  const job = response.data;
+
+  const title = `${job.title} at ${job.company.name} | HireFlow`;
+  const description =
+    job.description?.slice(0, 155) ||
+    `Apply for ${job.title} at ${job.company.name} on HireFlow. Junior developer jobs only.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/jobs/${job.company.slug}/${job.slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `/jobs/${job.company.slug}/${job.slug}`,
+      siteName: "HireFlow",
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 async function getJob(companySlug: string, jobSlug: string) {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL}/api/jobs/${companySlug}/${jobSlug}`,
