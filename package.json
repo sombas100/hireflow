@@ -6,7 +6,7 @@
   "scripts": {
     "seed:tags": "tsx scripts/seed-tags.ts",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint"
   },
