@@ -27,8 +27,6 @@ export default function Pagination({
     return `${basePath}?${params.toString()}`;
   };
 
-  if (totalPages <= 1) return null;
-
   return (
     <div className="flex items-center justify-center gap-4">
       {page > 1 ? (

@@ -2,61 +2,82 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import EmployerJobList from "@/components/employer/EmployerJobList";
+import Pagination from "@/components/shared/Pagination";
 import type { Job } from "@/interfaces/job";
 
-async function getEmployerJobs(userId: string, role: string): Promise<Job[]> {
-  const jobs = await prisma.job.findMany({
-    where:
-      role === "ADMIN"
-        ? {}
-        : {
-            OR: [
-              { createdById: userId },
-              {
-                company: {
-                  owners: {
-                    some: {
-                      id: userId,
-                    },
+type EmployerJobsPageProps = {
+  searchParams: Promise<{
+    page?: string;
+  }>;
+};
+
+async function getEmployerJobs(
+  userId: string,
+  role: string,
+  page: number,
+  limit: number,
+) {
+  const skip = (page - 1) * limit;
+
+  const where =
+    role === "ADMIN"
+      ? {}
+      : {
+          OR: [
+            { createdById: userId },
+            {
+              company: {
+                owners: {
+                  some: {
+                    id: userId,
                   },
                 },
               },
-            ],
+            },
+          ],
+        };
+
+  const [jobs, total] = await Promise.all([
+    prisma.job.findMany({
+      where,
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip,
+      take: limit,
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            logoUrl: true,
+            location: true,
           },
-    orderBy: {
-      createdAt: "desc",
-    },
-    include: {
-      company: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          logoUrl: true,
-          location: true,
         },
-      },
-      _count: {
-        select: {
-          applications: true,
-          bookmarks: true,
+        _count: {
+          select: {
+            applications: true,
+            bookmarks: true,
+          },
         },
-      },
-      tags: {
-        include: {
-          tag: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
+        tags: {
+          include: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    }),
+    prisma.job.count({ where }),
+  ]);
 
-  return jobs.map((job) => ({
+  const formattedJobs = jobs.map((job) => ({
     ...job,
     createdAt: job.createdAt.toISOString(),
     updatedAt: job.updatedAt.toISOString(),
@@ -64,9 +85,21 @@ async function getEmployerJobs(userId: string, role: string): Promise<Job[]> {
     expiresAt: job.expiresAt ? job.expiresAt.toISOString() : null,
     tags: job.tags.map((item) => item.tag),
   })) as Job[];
+
+  return {
+    jobs: formattedJobs,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    },
+  };
 }
 
-export default async function EmployerJobsPage() {
+export default async function EmployerJobsPage({
+  searchParams,
+}: EmployerJobsPageProps) {
   const session = await auth();
   const userId = (session?.user as any)?.id as string | undefined;
   const role = (session?.user as any)?.role as string | undefined;
@@ -79,7 +112,11 @@ export default async function EmployerJobsPage() {
     redirect("/");
   }
 
-  const jobs = await getEmployerJobs(userId, role);
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams.page || "1");
+  const limit = 5;
+
+  const { jobs, pagination } = await getEmployerJobs(userId, role, page, limit);
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10">
@@ -93,7 +130,22 @@ export default async function EmployerJobsPage() {
           </div>
         </div>
 
+        <div className="mb-6">
+          <p className="text-sm text-gray-600">
+            Showing {pagination.total} job{pagination.total === 1 ? "" : "s"}
+          </p>
+        </div>
+
         <EmployerJobList jobs={jobs} />
+
+        <div className="mt-8">
+          <Pagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            searchParams={resolvedSearchParams}
+            basePath="/employer/jobs"
+          />
+        </div>
       </div>
     </main>
   );

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import BookmarkList from "@/components/candidate/BookmarkList";
+import Pagination from "@/components/shared/Pagination";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Job } from "@/interfaces/job";
@@ -14,54 +15,71 @@ type Bookmark = {
   job: Job;
 };
 
-async function getBookmarks(userId: string): Promise<Bookmark[]> {
-  const bookmarks = await prisma.bookmark.findMany({
-    where: {
-      userId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    include: {
-      job: {
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          location: true,
-          jobType: true,
-          workplaceType: true,
-          isRemote: true,
-          salaryMin: true,
-          salaryMax: true,
-          salaryPeriod: true,
-          currency: true,
-          company: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              logoUrl: true,
-              location: true,
+type CandidateBookmarksPageProps = {
+  searchParams: Promise<{
+    page?: string;
+  }>;
+};
+
+async function getBookmarks(userId: string, page: number, limit: number) {
+  const skip = (page - 1) * limit;
+
+  const [bookmarks, total] = await Promise.all([
+    prisma.bookmark.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip,
+      take: limit,
+      include: {
+        job: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            location: true,
+            jobType: true,
+            workplaceType: true,
+            isRemote: true,
+            salaryMin: true,
+            salaryMax: true,
+            salaryPeriod: true,
+            currency: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                logoUrl: true,
+                location: true,
+              },
             },
-          },
-          tags: {
-            include: {
-              tag: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
+            tags: {
+              include: {
+                tag: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                  },
                 },
               },
             },
           },
         },
       },
-    },
-  });
+    }),
+    prisma.bookmark.count({
+      where: {
+        userId,
+      },
+    }),
+  ]);
 
-  return bookmarks.map((bookmark) => ({
+  const formattedBookmarks = bookmarks.map((bookmark) => ({
     ...bookmark,
     createdAt: bookmark.createdAt.toISOString(),
     job: {
@@ -69,11 +87,22 @@ async function getBookmarks(userId: string): Promise<Bookmark[]> {
       tags: bookmark.job.tags.map((item) => item.tag),
     },
   })) as Bookmark[];
+
+  return {
+    bookmarks: formattedBookmarks,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    },
+  };
 }
 
-export default async function CandidateBookmarksPage() {
+export default async function CandidateBookmarksPage({
+  searchParams,
+}: CandidateBookmarksPageProps) {
   const session = await auth();
-  console.log("SESSION:", session);
   const userId = (session?.user as any)?.id as string | undefined;
   const role = (session?.user as any)?.role as string | undefined;
 
@@ -85,11 +114,16 @@ export default async function CandidateBookmarksPage() {
     redirect("/");
   }
 
-  const bookmarks = await getBookmarks(userId);
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams.page || "1");
+  const limit = 5;
+
+  const { bookmarks, pagination } = await getBookmarks(userId, page, limit);
 
   return (
     <>
       <Navbar />
+
       <main className="min-h-screen bg-gray-50 px-4 py-10">
         <div className="mx-auto max-w-6xl">
           <div className="mb-8">
@@ -99,9 +133,26 @@ export default async function CandidateBookmarksPage() {
             </p>
           </div>
 
+          <div className="mb-6">
+            <p className="text-sm text-gray-600">
+              Showing {pagination.total} saved job
+              {pagination.total === 1 ? "" : "s"}
+            </p>
+          </div>
+
           <BookmarkList bookmarks={bookmarks} />
+
+          <div className="mt-8">
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              searchParams={resolvedSearchParams}
+              basePath="/candidate/bookmarks"
+            />
+          </div>
         </div>
       </main>
+
       <MainFooter />
     </>
   );

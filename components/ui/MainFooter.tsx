@@ -11,7 +11,7 @@ const MainFooter = () => {
           Hire<span className="text-primary">Flow</span>
         </Link>
 
-        <p className="text-sm text-gray-500 border-t pt-3">
+        <p className="text-sm text-center text-gray-500 border-t w-full pt-3">
           © 2026 Hireflow | Built & Designed in London UK by Corey Clarke.
         </p>
       </div>

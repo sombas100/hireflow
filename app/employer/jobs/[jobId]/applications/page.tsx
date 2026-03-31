@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import ApplicantList from "@/components/employer/ApplicantList";
+import Pagination from "@/components/shared/Pagination";
 
 type Applicant = {
   id: string;
@@ -41,9 +42,18 @@ type PageProps = {
   params: Promise<{
     jobId: string;
   }>;
+  searchParams: Promise<{
+    page?: string;
+  }>;
 };
 
-async function getApplicants(jobId: string, userId: string, role: string) {
+async function getApplicants(
+  jobId: string,
+  userId: string,
+  role: string,
+  page: number,
+  limit: number,
+) {
   const job = await prisma.job.findUnique({
     where: { id: jobId },
     select: {
@@ -71,43 +81,52 @@ async function getApplicants(jobId: string, userId: string, role: string) {
     }
   }
 
-  const applications = await prisma.application.findMany({
-    where: { jobId },
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          candidateProfile: {
-            select: {
-              headline: true,
-              location: true,
-              resumeUrl: true,
-              githubUrl: true,
-              linkedinUrl: true,
+  const skip = (page - 1) * limit;
+
+  const [applications, total] = await Promise.all([
+    prisma.application.findMany({
+      where: { jobId },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            candidateProfile: {
+              select: {
+                headline: true,
+                location: true,
+                resumeUrl: true,
+                githubUrl: true,
+                linkedinUrl: true,
+              },
+            },
+          },
+        },
+        job: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
             },
           },
         },
       },
-      job: {
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          company: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
-        },
-      },
-    },
-  });
+    }),
+    prisma.application.count({
+      where: { jobId },
+    }),
+  ]);
 
   return {
     jobTitle: job.title,
@@ -116,10 +135,19 @@ async function getApplicants(jobId: string, userId: string, role: string) {
       createdAt: application.createdAt.toISOString(),
       updatedAt: application.updatedAt.toISOString(),
     })) as Applicant[],
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    },
   };
 }
 
-export default async function EmployerApplicantsPage({ params }: PageProps) {
+export default async function EmployerApplicantsPage({
+  params,
+  searchParams,
+}: PageProps) {
   const session = await auth();
   const userId = (session?.user as any)?.id as string | undefined;
   const role = (session?.user as any)?.role as string | undefined;
@@ -133,13 +161,13 @@ export default async function EmployerApplicantsPage({ params }: PageProps) {
   }
 
   const { jobId } = await params;
-  const result = await getApplicants(jobId, userId, role);
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams.page || "1");
+  const limit = 5;
 
-  if (result === "forbidden") {
-    redirect("/employer/jobs");
-  }
+  const result = await getApplicants(jobId, userId, role, page, limit);
 
-  if (!result) {
+  if (result === "forbidden" || !result) {
     redirect("/employer/jobs");
   }
 
@@ -154,7 +182,23 @@ export default async function EmployerApplicantsPage({ params }: PageProps) {
           </p>
         </div>
 
+        <div className="mb-6">
+          <p className="text-sm text-gray-600">
+            Showing {result.pagination.total} applicant
+            {result.pagination.total === 1 ? "" : "s"}
+          </p>
+        </div>
+
         <ApplicantList applications={result.applications} />
+
+        <div className="mt-8">
+          <Pagination
+            page={result.pagination.page}
+            totalPages={result.pagination.totalPages}
+            searchParams={resolvedSearchParams}
+            basePath={`/employer/jobs/${jobId}/applications`}
+          />
+        </div>
       </div>
     </main>
   );
