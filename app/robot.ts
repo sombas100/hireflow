@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/employer/", "/api/", "/candidate/"],
     },
-    sitemap: "https://hireflowjobs.io/sitemap.xml",
+    sitemap: "https://www.hireflowjobs.io/sitemap.xml",
   };
 }

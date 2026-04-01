@@ -15,11 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://hireflowjobs.io"),
+  metadataBase: new URL("https://www.hireflowjobs.io"),
   title: {
     default: "HireFlow | Junior Developer Jobs",
     template: "%s | HireFlow",
   },
+  // icons: {
+  //   icon: "hireflowlogo.png",
+  // },
   description:
     "HireFlow is a junior developer job board focused on entry-level and junior software roles only.",
   keywords: [
@@ -35,7 +38,7 @@ export const metadata: Metadata = {
     title: "HireFlow | Junior Developer Jobs",
     description:
       "A job board focused only on entry-level and junior developer roles.",
-    url: "https://hireflowjobs.io",
+    url: "https://www.hireflowjobs.io",
     siteName: "HireFlow",
     type: "website",
   },
