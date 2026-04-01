@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Theme } from "@radix-ui/themes";
 import { ToastContainer } from "react-toastify";
@@ -14,15 +15,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.hireflowjobs.io"),
   title: {
     default: "HireFlow | Junior Developer Jobs",
     template: "%s | HireFlow",
   },
-  // icons: {
-  //   icon: "hireflowlogo.png",
-  // },
   description:
     "HireFlow is a junior developer job board focused on entry-level and junior software roles only.",
   keywords: [
@@ -61,6 +61,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          `}
+            </Script>
+          </>
+        )}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
