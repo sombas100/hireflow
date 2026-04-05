@@ -13,10 +13,12 @@ import {
 
 type SubscribeWelcomeEmailProps = {
   userEmail: string;
+  unsubscribeUrl: string;
 };
 
 export default function SubscribeWelcomeEmail({
   userEmail,
+  unsubscribeUrl,
 }: SubscribeWelcomeEmailProps) {
   return (
     <Html>
@@ -24,48 +26,43 @@ export default function SubscribeWelcomeEmail({
       <Preview>You’re subscribed to HireFlow job alerts</Preview>
       <Body style={main}>
         <Container style={container}>
-          {/* Hero */}
           <Section style={heroSection}>
             <Text style={eyebrow}>HireFlow</Text>
-
             <Heading style={heading}>You’re in 🎉</Heading>
-
             <Text style={subheading}>
               Thanks for subscribing to HireFlow. You’ll be the first to hear
               about new junior and entry-level developer roles.
             </Text>
           </Section>
 
-          {/* Content */}
           <Section style={card}>
             <Text style={bodyText}>What to expect:</Text>
 
             <Text style={listItem}>
               • Junior and entry-level developer jobs only
             </Text>
-
             <Text style={listItem}>
               • Relevant roles without senior-level noise
             </Text>
-
             <Text style={listItem}>• Links straight to the live listings</Text>
 
             <Button href="https://www.hireflowjobs.io/jobs" style={button}>
               Browse HireFlow
             </Button>
 
-            {/* Unsubscribe */}
             <Text style={unsubscribe}>
-              No spam. You can unsubscribe at any time.
+              No spam.{" "}
+              <a href={unsubscribeUrl} style={unsubscribeLink}>
+                Unsubscribe
+              </a>{" "}
+              at any time.
             </Text>
           </Section>
 
           <Hr style={hr} />
 
-          {/* Footer */}
           <Section>
             <Text style={footer}>This email was sent to {userEmail}.</Text>
-
             <Text style={footer}>
               HireFlow helps junior developers find relevant opportunities
               faster.
@@ -158,6 +155,11 @@ const unsubscribe = {
   color: "#6b7280",
   fontSize: "12px",
   marginTop: "16px",
+};
+
+const unsubscribeLink = {
+  color: "#2563eb",
+  textDecoration: "underline",
 };
 
 const hr = {

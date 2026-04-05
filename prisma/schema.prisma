@@ -303,7 +303,9 @@ model JobView {
 }
 
 model Subscriber {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  createdAt DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  email            String   @unique
+  createdAt        DateTime @default(now())
+  isSubscribed     Boolean  @default(true)
+  unsubscribeToken String   @unique
 }
