@@ -4,6 +4,7 @@ import { navLinks } from "@/constants";
 import { auth } from "@/auth";
 import UserMenu from "@/components/ui/UserMenu";
 import MobileNavbarMenu from "@/components/ui/MobileNavbarMenu";
+import Logo from "@/components/ui/Logo";
 
 const Navbar = async () => {
   const session = await auth();
@@ -12,12 +13,7 @@ const Navbar = async () => {
   return (
     <nav className="w-full bg-gray-900 px-4 py-4 text-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
-        <Link href="/" className="shrink-0 flex flex-col">
-          <Heading as="h1" size="6" className="tracking-widest">
-            Hire<span className="text-primary">Flow</span>
-          </Heading>
-          <span className="text-gray-500 text-xs">Find Junior tech roles</span>
-        </Link>
+        <Logo />
 
         {/* Desktop nav links */}
         <div className="hidden items-center gap-6 md:flex">

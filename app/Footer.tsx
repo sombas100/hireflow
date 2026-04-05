@@ -1,3 +1,4 @@
+import Logo from "@/components/ui/Logo";
 import Link from "next/link";
 
 const Footer = () => {
@@ -18,12 +19,7 @@ const Footer = () => {
         </Link>
       </div>
       <div className="mx-auto pt-4 flex max-w-7xl flex-row items-center justify-center text-center md:flex-col md:text-left">
-        <Link href="/" className="text-xl text-white font-bold tracking-wide ">
-          Hire<span className="text-primary">Flow</span>
-        </Link>
-        <span className="text-gray-500 text-xs mb-4">
-          Find Junior tech roles
-        </span>
+        <Logo />
         <p className="text-sm text-gray-500">
           © 2026 Hireflow | Built & Designed in London UK by Corey Clarke.
         </p>
