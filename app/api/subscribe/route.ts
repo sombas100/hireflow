@@ -11,6 +11,76 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+async function sendWelcomeEmail({
+  email,
+  unsubscribeToken,
+  subject,
+}: {
+  email: string;
+  unsubscribeToken: string;
+  subject: string;
+}) {
+  const from = process.env.EMAIL_FROM;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+  if (!from) {
+    return {
+      success: false,
+      message: "Subscribed successfully, but welcome email is not configured yet.",
+    };
+  }
+
+  if (!appUrl) {
+    return {
+      success: false,
+      message: "Subscribed successfully, but app URL is not configured yet.",
+    };
+  }
+
+  try {
+    const unsubscribeUrl = `${appUrl}/unsubscribe?token=${unsubscribeToken}`;
+
+    const html = await render(
+      SubscribeWelcomeEmail({
+        userEmail: email,
+        unsubscribeUrl,
+      })
+    );
+
+    const result = await resend.emails.send({
+      from,
+      to: email,
+      subject,
+      html,
+    });
+
+    console.log("Resend result:", result);
+
+    if (result.error) {
+      console.error("Resend send error:", result.error);
+
+      return {
+        success: false,
+        message:
+          "Subscribed successfully, but the welcome email could not be sent.",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Subscribed successfully. Check your inbox.",
+    };
+  } catch (error) {
+    console.error("Email render/send threw:", error);
+
+    return {
+      success: false,
+      message:
+        "Subscribed successfully, but the welcome email could not be sent.",
+    };
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -28,150 +98,54 @@ export async function POST(request: Request) {
       where: { email },
     });
 
-    if (existingSubscriber) {
-      if (!existingSubscriber.isSubscribed) {
-        const updated = await prisma.subscriber.update({
-          where: { email },
-          data: {
-            isSubscribed: true,
-            unsubscribeToken: crypto.randomUUID(),
-          },
-        });
-
-        const from = process.env.EMAIL_FROM;
-
-        if (!from) {
-          return NextResponse.json(
-            {
-              message:
-                "Subscribed successfully, but welcome email is not configured yet.",
-            },
-            { status: 200 }
-          );
-        }
-
-        try {
-          const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?token=${updated.unsubscribeToken}`;
-
-          const html = await render(
-            SubscribeWelcomeEmail({
-              userEmail: email,
-              unsubscribeUrl,
-            })
-          );
-
-          const result = await resend.emails.send({
-            from,
-            to: email,
-            subject: "Welcome back to HireFlow job alerts",
-            html,
-          });
-
-          console.log("Resend result:", result);
-
-          if (result.error) {
-            console.error("Resend send error:", result.error);
-
-            return NextResponse.json(
-              {
-                message:
-                  "Subscribed successfully, but the welcome email could not be sent.",
-              },
-              { status: 200 }
-            );
-          }
-        } catch (emailError) {
-          console.error("Email render/send threw:", emailError);
-
-          return NextResponse.json(
-            {
-              message:
-                "Subscribed successfully, but the welcome email could not be sent.",
-            },
-            { status: 200 }
-          );
-        }
-
-        return NextResponse.json(
-          { message: "You’ve been re-subscribed successfully." },
-          { status: 200 }
-        );
-      }
-
+    if (existingSubscriber?.isSubscribed) {
       return NextResponse.json(
         { message: "You’re already subscribed." },
         { status: 200 }
       );
     }
 
-    const unsubscribeToken = crypto.randomUUID();
+    if (existingSubscriber && !existingSubscriber.isSubscribed) {
+      const updatedSubscriber = await prisma.subscriber.update({
+        where: { email },
+        data: {
+          isSubscribed: true,
+          unsubscribeToken: crypto.randomUUID(),
+        },
+      });
 
-    const subscriber = await prisma.subscriber.create({
+      const emailResult = await sendWelcomeEmail({
+        email,
+        unsubscribeToken: updatedSubscriber.unsubscribeToken,
+        subject: "Welcome back to HireFlow job alerts",
+      });
+
+      return NextResponse.json(
+        {
+          message: emailResult.success
+            ? "You’ve been re-subscribed successfully. Check your inbox."
+            : emailResult.message,
+        },
+        { status: 200 }
+      );
+    }
+
+    const newSubscriber = await prisma.subscriber.create({
       data: {
         email,
-        unsubscribeToken,
         isSubscribed: true,
+        unsubscribeToken: crypto.randomUUID(),
       },
     });
 
-    const from = process.env.EMAIL_FROM;
-
-    if (!from) {
-      console.error("Missing EMAIL_FROM environment variable");
-
-      return NextResponse.json(
-        {
-          message:
-            "Subscribed successfully, but welcome email is not configured yet.",
-        },
-        { status: 201 }
-      );
-    }
-
-    try {
-      const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?token=${subscriber.unsubscribeToken}`;
-
-      const html = await render(
-        SubscribeWelcomeEmail({
-          userEmail: email,
-          unsubscribeUrl,
-        })
-      );
-
-      const result = await resend.emails.send({
-        from,
-        to: email,
-        subject: "Welcome to HireFlow job alerts",
-        html,
-      });
-
-      console.log("Resend result:", result);
-
-      if (result.error) {
-        console.error("Resend send error:", result.error);
-
-        return NextResponse.json(
-          {
-            message:
-              "Subscribed successfully, but the welcome email could not be sent.",
-          },
-          { status: 201 }
-        );
-      }
-    } catch (emailError) {
-      console.error("Email render/send threw:", emailError);
-
-      return NextResponse.json(
-        {
-          message:
-            "Subscribed successfully, but the welcome email could not be sent.",
-        },
-        { status: 201 }
-      );
-    }
+    const emailResult = await sendWelcomeEmail({
+      email,
+      unsubscribeToken: newSubscriber.unsubscribeToken,
+      subject: "Welcome to HireFlow job alerts",
+    });
 
     return NextResponse.json(
-      { message: "Subscribed successfully. Check your inbox." },
+      { message: emailResult.message },
       { status: 201 }
     );
   } catch (error) {
