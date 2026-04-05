@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Footer from "./Footer";
 import LandingNavbar from "@/components/ui/LandingNavbar";
 import Link from "next/link";
+import SubscribeForm from "@/components/email/SubscribeForm";
 
 export const metadata: Metadata = {
   title: "HireFlow | Junior Developer Jobs",
@@ -178,7 +179,22 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="px-4 pb-24">
+        <section className="flex flex-col items-center justify-center rounded-3xl bg-slate-950 px-6 py-10 text-white">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">
+            Weekly alerts
+          </p>
+          <h2 className="mb-3 text-3xl font-bold">
+            Get junior developer jobs in your inbox
+          </h2>
+          <p className="mb-6 max-w-2xl text-slate-300">
+            Subscribe for new junior, entry-level, and internship roles without
+            the noise.
+          </p>
+
+          <SubscribeForm />
+        </section>
+
+        <section className="px-4 pb-24 mt-12">
           <div className="mx-auto max-w-4xl rounded-3xl border border-zinc-800 bg-zinc-900/80 p-8 text-center shadow-lg md:p-12">
             <Heading as="h2" size="8" className="tracking-wide">
               Start your junior developer journey

@@ -59,8 +59,7 @@ export default function JobCard({
 
         {(job.salaryMin || job.salaryMax) && (
           <p className="text-sm font-medium text-gray-800">
-            {job.currency || "GBP"} £{job.salaryMin ?? 0} - £
-            {job.salaryMax ?? 0}
+            {job.currency || "GBP"} {job.salaryMin ?? 0} - {job.salaryMax ?? 0}
             {job.salaryPeriod ? ` / ${job.salaryPeriod.toLowerCase()}` : ""}
           </p>
         )}

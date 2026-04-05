@@ -216,7 +216,7 @@ export default async function JobDetailsPage({ params }: JobDetailsPageProps) {
                 {(job.salaryMin || job.salaryMax) && (
                   <p>
                     <span className="font-medium text-gray-800">Salary:</span>{" "}
-                    {job.currency || "GBP"} £{job.salaryMin ?? 0} - £
+                    {job.currency || "GBP"} {job.salaryMin ?? 0} -
                     {job.salaryMax ?? 0}
                     {job.salaryPeriod
                       ? ` / ${job.salaryPeriod.toLowerCase()}`

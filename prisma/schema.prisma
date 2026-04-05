@@ -301,3 +301,9 @@ model JobView {
   @@index([userId, createdAt])
   @@map("job_views")
 }
+
+model Subscriber {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
