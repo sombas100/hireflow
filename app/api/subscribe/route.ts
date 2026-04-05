@@ -26,14 +26,14 @@ async function sendWelcomeEmail({
   if (!from) {
     return {
       success: false,
-      message: "Subscribed successfully, but welcome email is not configured yet.",
+      message: "Subscription updated, but email sending is not configured yet.",
     };
   }
 
   if (!appUrl) {
     return {
       success: false,
-      message: "Subscribed successfully, but app URL is not configured yet.",
+      message: "Subscription updated, but app URL is not configured yet.",
     };
   }
 
@@ -62,13 +62,13 @@ async function sendWelcomeEmail({
       return {
         success: false,
         message:
-          "Subscribed successfully, but the welcome email could not be sent.",
+          "Subscription updated, but the welcome email could not be sent.",
       };
     }
 
     return {
       success: true,
-      message: "Subscribed successfully. Check your inbox.",
+      message: "A fresh email has been sent to your inbox.",
     };
   } catch (error) {
     console.error("Email render/send threw:", error);
@@ -76,7 +76,7 @@ async function sendWelcomeEmail({
     return {
       success: false,
       message:
-        "Subscribed successfully, but the welcome email could not be sent.",
+        "Subscription updated, but the welcome email could not be sent.",
     };
   }
 }
@@ -94,59 +94,57 @@ export async function POST(request: Request) {
       );
     }
 
+    const freshToken = crypto.randomUUID();
+
     const existingSubscriber = await prisma.subscriber.findUnique({
       where: { email },
     });
 
-    if (existingSubscriber?.isSubscribed) {
-      return NextResponse.json(
-        { message: "You’re already subscribed." },
-        { status: 200 }
-      );
-    }
+    let subscriber;
+    let subject = "Welcome to HireFlow job alerts";
+    let status = 201;
 
-    if (existingSubscriber && !existingSubscriber.isSubscribed) {
-      const updatedSubscriber = await prisma.subscriber.update({
+    if (!existingSubscriber) {
+      subscriber = await prisma.subscriber.create({
+        data: {
+          email,
+          isSubscribed: true,
+          unsubscribeToken: freshToken,
+        },
+      });
+    } else {
+      subscriber = await prisma.subscriber.update({
         where: { email },
         data: {
           isSubscribed: true,
-          unsubscribeToken: crypto.randomUUID(),
+          unsubscribeToken: freshToken,
         },
       });
 
-      const emailResult = await sendWelcomeEmail({
-        email,
-        unsubscribeToken: updatedSubscriber.unsubscribeToken,
-        subject: "Welcome back to HireFlow job alerts",
-      });
+      subject = existingSubscriber.isSubscribed
+        ? "Your fresh HireFlow job alert link"
+        : "Welcome back to HireFlow job alerts";
 
-      return NextResponse.json(
-        {
-          message: emailResult.success
-            ? "You’ve been re-subscribed successfully. Check your inbox."
-            : emailResult.message,
-        },
-        { status: 200 }
-      );
+      status = 200;
     }
-
-    const newSubscriber = await prisma.subscriber.create({
-      data: {
-        email,
-        isSubscribed: true,
-        unsubscribeToken: crypto.randomUUID(),
-      },
-    });
 
     const emailResult = await sendWelcomeEmail({
       email,
-      unsubscribeToken: newSubscriber.unsubscribeToken,
-      subject: "Welcome to HireFlow job alerts",
+      unsubscribeToken: subscriber.unsubscribeToken,
+      subject,
     });
 
     return NextResponse.json(
-      { message: emailResult.message },
-      { status: 201 }
+      {
+        message: emailResult.success
+          ? !existingSubscriber
+            ? "Subscribed successfully. Check your inbox."
+            : !existingSubscriber.isSubscribed
+            ? "You’ve been re-subscribed successfully. Check your inbox."
+            : "You’re already subscribed. We’ve sent you a fresh email."
+          : emailResult.message,
+      },
+      { status }
     );
   } catch (error) {
     console.error("Subscribe route error:", error);
