@@ -43,3 +43,45 @@ export type CachedJob = {
     bookmarks: number;
   };
 };
+
+export type CachedJobsResponse = {
+  data: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    location: string | null;
+    isRemote: boolean;
+    jobType: string;
+    workplaceType: string;
+    experienceLevel: string | null;
+    salaryMin: number | null;
+    salaryMax: number | null;
+    salaryPeriod: string | null;
+    currency: string | null;
+    publishedAt: Date | null;
+    createdAt: Date;
+    company: {
+      id: string;
+      name: string;
+      slug: string;
+      logoUrl: string | null;
+      location: string | null;
+    };
+    tags: {
+      id: string;
+      name: string;
+      slug: string;
+    }[];
+    _count: {
+      applications: number;
+    };
+  }>;
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+};

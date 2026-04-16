@@ -1,6 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { JobsQuerySchema } from "@/zod/zod";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
+import type { CachedJobsResponse } from "@/lib/types";
+
+function buildJobsCacheKey(params: {
+  q?: string;
+  location?: string;
+  type?: string;
+  workplace?: string;
+  tags: string[];
+  remote?: boolean;
+  sort?: string;
+  page: number;
+  limit: number;
+}) {
+  const sortedTags = [...params.tags].sort().join(",");
+
+  return [
+    "jobs",
+    `q=${params.q ?? ""}`,
+    `location=${params.location ?? ""}`,
+    `type=${params.type ?? ""}`,
+    `workplace=${params.workplace ?? ""}`,
+    `tags=${sortedTags}`,
+    `remote=${params.remote === undefined ? "" : String(params.remote)}`,
+    `sort=${params.sort ?? ""}`,
+    `page=${params.page}`,
+    `limit=${params.limit}`,
+  ].join(":");
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,19 +59,40 @@ export async function GET(req: NextRequest) {
     const { q, location, type, workplace, tags, remote, sort, page, limit } =
       validation.data;
 
+    const cacheKey = buildJobsCacheKey({
+      q,
+      location,
+      type,
+      workplace,
+      tags,
+      remote,
+      sort,
+      page,
+      limit,
+    });
+
+    const cached = await redis.get<CachedJobsResponse>(cacheKey);
+
+    if (cached) {
+      return NextResponse.json(cached, { status: 200 });
+    }
+
     const skip = (page - 1) * limit;
 
-    
     const where: any = {
       isPublished: true,
       OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
     };
 
     if (q) {
-      where.OR = [
-        { title: { contains: q, mode: "insensitive" } },
-        { description: { contains: q, mode: "insensitive" } },
-        { company: { name: { contains: q, mode: "insensitive" } } },
+      where.AND = [
+        {
+          OR: [
+            { title: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+            { company: { name: { contains: q, mode: "insensitive" } } },
+          ],
+        },
       ];
     }
 
@@ -61,10 +111,7 @@ export async function GET(req: NextRequest) {
       where.tags = {
         some: {
           tag: {
-            OR: [
-              { slug: { in: tags } },
-              { name: { in: tags } },
-            ],
+            OR: [{ slug: { in: tags } }, { name: { in: tags } }],
           },
         },
       };
@@ -79,7 +126,6 @@ export async function GET(req: NextRequest) {
           ]
         : [{ publishedAt: "desc" as const }, { createdAt: "desc" as const }];
 
-    
     const [total, jobs] = await prisma.$transaction([
       prisma.job.count({ where }),
       prisma.job.findMany({
@@ -113,7 +159,13 @@ export async function GET(req: NextRequest) {
           },
           tags: {
             select: {
-              tag: { select: { id: true, name: true, slug: true } },
+              tag: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
             },
           },
           _count: {
@@ -125,7 +177,7 @@ export async function GET(req: NextRequest) {
 
     const totalPages = Math.max(1, Math.ceil(total / limit));
 
-    return NextResponse.json({
+    const response: CachedJobsResponse = {
       data: jobs.map((j) => ({
         ...j,
         tags: j.tags.map((t) => t.tag),
@@ -138,7 +190,13 @@ export async function GET(req: NextRequest) {
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
       },
+    };
+
+    await redis.set(cacheKey, response, {
+      ex: 120,
     });
+
+    return NextResponse.json(response, { status: 200 });
   } catch (err) {
     console.error(err);
     return NextResponse.json(
