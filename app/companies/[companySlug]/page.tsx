@@ -4,6 +4,7 @@ import { Job } from "@/interfaces/job";
 import { Tag } from "@/interfaces/job";
 import MainFooter from "@/components/ui/MainFooter";
 import type { Metadata } from "next";
+import { getCompany } from "@/lib/actions/company";
 
 type CompanyDetailsPageProps = {
   params: Promise<{
@@ -11,30 +12,11 @@ type CompanyDetailsPageProps = {
   }>;
 };
 
-async function getCompanyForMetadata(companySlug: string) {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/companies/${companySlug}`,
-    {
-      cache: "no-store",
-    },
-  );
-
-  if (res.status === 404) {
-    return null;
-  }
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch company metadata");
-  }
-
-  return res.json();
-}
-
 export async function generateMetadata({
   params,
 }: CompanyDetailsPageProps): Promise<Metadata> {
   const { companySlug } = await params;
-  const response = await getCompanyForMetadata(companySlug);
+  const response = await getCompany(companySlug);
 
   if (!response?.data) {
     return {
@@ -69,25 +51,6 @@ export async function generateMetadata({
       description,
     },
   };
-}
-
-async function getCompany(companySlug: string) {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/companies/${companySlug}`,
-    {
-      cache: "no-store",
-    },
-  );
-
-  if (res.status === 404) {
-    return null;
-  }
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch company");
-  }
-
-  return res.json();
 }
 
 export default async function CompanyDetailsPage({

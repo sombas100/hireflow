@@ -15,11 +15,14 @@ type JobDetailsPageProps = {
   }>;
 };
 
-async function getJobForMetadata(companySlug: string, jobSlug: string) {
+async function getJob(companySlug: string, jobSlug: string) {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL}/api/jobs/${companySlug}/${jobSlug}`,
     {
-      cache: "no-store",
+      next: {
+        revalidate: 300,
+        tags: [`job-${companySlug}-${jobSlug}`],
+      },
     },
   );
 
@@ -28,7 +31,7 @@ async function getJobForMetadata(companySlug: string, jobSlug: string) {
   }
 
   if (!res.ok) {
-    throw new Error("Failed to fetch job metadata");
+    throw new Error("Failed to fetch job");
   }
 
   return res.json();
@@ -38,7 +41,7 @@ export async function generateMetadata({
   params,
 }: JobDetailsPageProps): Promise<Metadata> {
   const { companySlug, jobSlug } = await params;
-  const response = await getJobForMetadata(companySlug, jobSlug);
+  const response = await getJob(companySlug, jobSlug);
 
   if (!response?.data) {
     return {
@@ -73,24 +76,6 @@ export async function generateMetadata({
       description,
     },
   };
-}
-async function getJob(companySlug: string, jobSlug: string) {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/jobs/${companySlug}/${jobSlug}`,
-    {
-      cache: "no-store",
-    },
-  );
-
-  if (res.status === 404) {
-    return null;
-  }
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch job");
-  }
-
-  return res.json();
 }
 
 async function getBookmarkStatus(

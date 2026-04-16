@@ -6,6 +6,7 @@ import Pagination from "@/components/shared/Pagination";
 import Navbar from "../Navbar";
 import MainFooter from "@/components/ui/MainFooter";
 import type { Metadata } from "next";
+import { getJobs } from "@/lib/actions/jobs";
 
 type JobsPageProps = {
   searchParams: Promise<{
@@ -22,38 +23,6 @@ export const metadata: Metadata = {
   description:
     "Browse entry-level and junior developer roles on HireFlow. Find frontend, backend, and full stack opportunities built for early-career developers.",
 };
-
-async function getJobs(searchParams: {
-  q?: string;
-  location?: string;
-  type?: string;
-  workplace?: string;
-  page?: string;
-}) {
-  const params = new URLSearchParams();
-
-  if (searchParams.q) params.set("q", searchParams.q);
-  if (searchParams.location) params.set("location", searchParams.location);
-  if (searchParams.type) params.set("type", searchParams.type);
-  if (searchParams.workplace) params.set("workplace", searchParams.workplace);
-  if (searchParams.page) params.set("page", searchParams.page);
-
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/jobs?${params.toString()}`,
-    {
-      next: {
-        revalidate: 300,
-        tags: ["jobs"],
-      },
-    },
-  );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch jobs");
-  }
-
-  return res.json();
-}
 
 async function getBookmarkedJobIds(userId?: string, role?: string) {
   if (!userId || (role !== "CANDIDATE" && role !== "ADMIN")) {
