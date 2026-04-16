@@ -27,7 +27,10 @@ async function getCompanies(searchParams: { q?: string; page?: string }) {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL}/api/companies?${params.toString()}`,
     {
-      cache: "no-store",
+      next: {
+        revalidate: 300,
+        tags: ["companies"],
+      },
     },
   );
 

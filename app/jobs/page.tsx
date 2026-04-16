@@ -41,7 +41,10 @@ async function getJobs(searchParams: {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL}/api/jobs?${params.toString()}`,
     {
-      cache: "no-store",
+      next: {
+        revalidate: 300,
+        tags: ["jobs"],
+      },
     },
   );
 
