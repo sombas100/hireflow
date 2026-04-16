@@ -27,6 +27,7 @@ export default function ApplyToJobCard({
   const [useSavedResume, setUseSavedResume] = useState(Boolean(savedResumeUrl));
   const [isApplying, setIsApplying] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
   const canApply =
     isAuthenticated && (userRole === "CANDIDATE" || userRole === "ADMIN");
@@ -37,6 +38,7 @@ export default function ApplyToJobCard({
     try {
       setIsApplying(true);
       setMessage("");
+      setMessageType("");
 
       const finalResumeUrl = useSavedResume ? savedResumeUrl : resumeUrl;
 
@@ -55,9 +57,44 @@ export default function ApplyToJobCard({
       const data = await res.json();
 
       if (!res.ok) {
+        setMessageType("error");
+
+        if (res.status === 429) {
+          setMessage(
+            "Too many application attempts. Please wait before trying again.",
+          );
+          return;
+        }
+
+        if (res.status === 409) {
+          setMessage("You have already applied to this job.");
+          return;
+        }
+
+        if (res.status === 400) {
+          setMessage(data?.error || "Your application details are invalid.");
+          return;
+        }
+
+        if (res.status === 401) {
+          setMessage("You need to sign in before applying.");
+          return;
+        }
+
+        if (res.status === 403) {
+          setMessage("Your account is not allowed to apply for jobs.");
+          return;
+        }
+
+        if (res.status === 404) {
+          setMessage("This job could not be found.");
+          return;
+        }
+
         throw new Error(data?.error || "Failed to apply");
       }
 
+      setMessageType("success");
       setMessage("Application submitted successfully.");
       setCoverLetter("");
 
@@ -66,6 +103,7 @@ export default function ApplyToJobCard({
       }
     } catch (error: any) {
       console.error(error);
+      setMessageType("error");
       setMessage(error.message || "Something went wrong while applying.");
     } finally {
       setIsApplying(false);
@@ -176,7 +214,15 @@ export default function ApplyToJobCard({
             {isApplying ? "Applying..." : "Submit Application"}
           </button>
 
-          {message && <p className="text-sm text-gray-600">{message}</p>}
+          {message && (
+            <p
+              className={`text-sm ${
+                messageType === "success" ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {message}
+            </p>
+          )}
         </form>
       )}
 
