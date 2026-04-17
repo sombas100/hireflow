@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { ApplicationStatus } from "@/app/generated/prisma/enums";
 
 type RouteContext = {
   params: Promise<{
@@ -70,7 +71,7 @@ export async function PATCH(_request: NextRequest, context: RouteContext) {
       );
     }
 
-    if (application.status === "WITHDRAWN") {
+    if (application.status === ApplicationStatus.WITHDRAWN) {
       return NextResponse.json(
         { error: "Application is already withdrawn" },
         { status: 400 }
@@ -82,7 +83,7 @@ export async function PATCH(_request: NextRequest, context: RouteContext) {
         id: applicationId,
       },
       data: {
-        status: "WITHDRAWN",
+        status: ApplicationStatus.WITHDRAWN,
       },
       include: {
         job: {

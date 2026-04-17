@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { CreateApplicationSchema } from "@/zod/zod";
 import { applyRatelimit } from "@/lib/ratelimit";
+import { ApplicationStatus } from "@/app/generated/prisma/enums";
 
 function getClientIp(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -87,12 +88,87 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const existingApplication = await prisma.application.findFirst({
+      where: {
+        userId,
+        jobId: data.jobId,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (
+      existingApplication &&
+      existingApplication.status !== ApplicationStatus.WITHDRAWN &&
+      existingApplication.status !== ApplicationStatus.REJECTED
+    ) {
+      return NextResponse.json(
+        { error: "You have already applied to this job" },
+        { status: 409 }
+      );
+    }
+
+    if (
+      existingApplication &&
+      (existingApplication.status === ApplicationStatus.WITHDRAWN ||
+        existingApplication.status === ApplicationStatus.REJECTED)
+    ) {
+      const application = await prisma.application.update({
+        where: {
+          id: existingApplication.id,
+        },
+        data: {
+          coverLetter: data.coverLetter,
+          resumeUrl: data.resumeUrl,
+          status: ApplicationStatus.SUBMITTED,
+        },
+        include: {
+          job: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              company: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      return NextResponse.json(
+        { data: application },
+        {
+          status: 200,
+          headers: {
+            "X-RateLimit-Limit": String(limit),
+            "X-RateLimit-Remaining": String(remaining),
+            "X-RateLimit-Reset": String(reset),
+          },
+        }
+      );
+    }
+
     const application = await prisma.application.create({
       data: {
         jobId: data.jobId,
         userId,
         coverLetter: data.coverLetter,
         resumeUrl: data.resumeUrl,
+        status: ApplicationStatus.SUBMITTED,
       },
       include: {
         job: {

@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import BookmarkJobButton from "@/components/jobs/BookmarkJobButton";
 import MainFooter from "@/components/ui/MainFooter";
 import type { Metadata } from "next";
+import { getApplicationStatus } from "@/lib/actions/application";
 
 type JobDetailsPageProps = {
   params: Promise<{
@@ -132,7 +133,10 @@ export default async function JobDetailsPage({ params }: JobDetailsPageProps) {
   }
 
   const job = response.data;
-  const isBookmarked = await getBookmarkStatus(userId, userRole, job.id);
+  const [isBookmarked, hasApplied] = await Promise.all([
+    getBookmarkStatus(userId, userRole, job.id),
+    getApplicationStatus(userId, userRole, job.id),
+  ]);
 
   return (
     <>
@@ -332,6 +336,7 @@ export default async function JobDetailsPage({ params }: JobDetailsPageProps) {
                   applyEmail={job.applyEmail}
                   savedResumeUrl={candidateResume?.resumeUrl || ""}
                   savedResumeName={candidateResume?.resumeName || ""}
+                  hasAppliedInitially={hasApplied}
                 />
               </aside>
             </div>
