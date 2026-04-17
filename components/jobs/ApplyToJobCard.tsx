@@ -24,13 +24,52 @@ export default function ApplyToJobCard({
 }: ApplyToJobCardProps) {
   const [coverLetter, setCoverLetter] = useState("");
   const [resumeUrl, setResumeUrl] = useState(savedResumeUrl);
+  const [resumeFileName, setResumeFileName] = useState(savedResumeName);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [useSavedResume, setUseSavedResume] = useState(Boolean(savedResumeUrl));
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
   const canApply =
     isAuthenticated && (userRole === "CANDIDATE" || userRole === "ADMIN");
+
+  const handleResumeUpload = async () => {
+    if (!resumeFile) return;
+
+    try {
+      setIsUploadingResume(true);
+      setMessage("");
+      setMessageType("");
+
+      const formData = new FormData();
+      formData.append("file", resumeFile);
+
+      const res = await fetch("/api/upload/resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to upload resume");
+      }
+
+      setResumeFileName(data.data.fileName);
+      setResumeUrl(data.data.url);
+      setMessageType("success");
+      setMessage("Resume uploaded successfully.");
+    } catch (error: any) {
+      console.error(error);
+      setMessageType("error");
+      setMessage(error.message || "Failed to upload resume.");
+    } finally {
+      setIsUploadingResume(false);
+    }
+  };
 
   const handleApply = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -42,6 +81,15 @@ export default function ApplyToJobCard({
 
       const finalResumeUrl = useSavedResume ? savedResumeUrl : resumeUrl;
 
+      // Optional but recommended: require a resume before applying
+      if (!finalResumeUrl) {
+        setMessageType("error");
+        setMessage(
+          "Please upload a resume or use your saved resume before applying.",
+        );
+        return;
+      }
+
       const res = await fetch("/api/applications", {
         method: "POST",
         headers: {
@@ -50,7 +98,7 @@ export default function ApplyToJobCard({
         body: JSON.stringify({
           jobId,
           coverLetter: coverLetter.trim() || undefined,
-          resumeUrl: finalResumeUrl?.trim() || undefined,
+          resumeUrl: finalResumeUrl.trim() || undefined,
         }),
       });
 
@@ -68,6 +116,7 @@ export default function ApplyToJobCard({
 
         if (res.status === 409) {
           setMessage("You have already applied to this job.");
+          setHasApplied(true);
           return;
         }
 
@@ -94,12 +143,13 @@ export default function ApplyToJobCard({
         throw new Error(data?.error || "Failed to apply");
       }
 
+      setHasApplied(true);
       setMessageType("success");
       setMessage("Application submitted successfully.");
       setCoverLetter("");
 
       if (!useSavedResume) {
-        setResumeUrl("");
+        setResumeFile(null);
       }
     } catch (error: any) {
       console.error(error);
@@ -190,28 +240,63 @@ export default function ApplyToJobCard({
           {!useSavedResume && (
             <div>
               <label
-                htmlFor="resumeUrl"
+                htmlFor="resumeFile"
                 className="mb-2 block text-sm font-medium text-gray-700"
               >
-                Resume URL
+                Resume
               </label>
+
               <input
-                id="resumeUrl"
-                type="url"
-                value={resumeUrl}
-                onChange={(e) => setResumeUrl(e.target.value)}
-                placeholder="https://example.com/resume.pdf"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500"
+                id="resumeFile"
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setResumeFile(file);
+                }}
+                className="w-full cursor-pointer rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500"
               />
+
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleResumeUpload}
+                  disabled={!resumeFile || isUploadingResume}
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {isUploadingResume ? "Uploading..." : "Upload Resume"}
+                </button>
+
+                {resumeUrl && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <a
+                      href={resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      View uploaded resume
+                    </a>
+
+                    {resumeFileName && (
+                      <span className="text-gray-500">({resumeFileName})</span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           <button
             type="submit"
-            disabled={isApplying}
+            disabled={isApplying || hasApplied || isUploadingResume}
             className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
           >
-            {isApplying ? "Applying..." : "Submit Application"}
+            {hasApplied
+              ? "Application Submitted"
+              : isApplying
+                ? "Applying..."
+                : "Submit Application"}
           </button>
 
           {message && (
