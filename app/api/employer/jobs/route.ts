@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { CreateJobSchema } from "@/zod/zod";
+import { redis } from "@/lib/redis";
 
 export async function POST(request: NextRequest) {
   try {
@@ -112,6 +113,12 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    await redis.del(`company:${job.company.slug}`);
+
+    if (job.isPublished) {
+      await redis.del(`job:${job.company.slug}:${job.slug}`);
+    }
 
     return NextResponse.json(
       {

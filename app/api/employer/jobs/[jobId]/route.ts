@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { UpdateJobSchema } from "@/zod/zod";
+import { redis } from "@/lib/redis";
 
 type RouteContext = {
   params: Promise<{
@@ -34,10 +35,13 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       select: {
         id: true,
         title: true,
+        slug: true,
+        isPublished: true,
         createdById: true,
         company: {
           select: {
             id: true,
+            slug: true,
             owners: {
               select: {
                 id: true,
@@ -67,6 +71,12 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     await prisma.job.delete({
       where: { id: jobId },
     });
+
+    await redis.del(`company:${job.company.slug}`);
+
+    if (job.isPublished) {
+      await redis.del(`job:${job.company.slug}:${job.slug}`);
+    }
 
     return NextResponse.json(
       { message: "Job deleted successfully" },
@@ -127,9 +137,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       where: { id: jobId },
       select: {
         id: true,
+        slug: true,
+        isPublished: true,
         createdById: true,
         company: {
           select: {
+            slug: true,
             owners: {
               select: {
                 id: true,
@@ -155,6 +168,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         );
       }
     }
+
+    const oldCompanySlug = job.company.slug;
+    const oldJobSlug = job.slug;
+    const oldIsPublished = job.isPublished;
 
     const { tagIds, ...rest } = data;
 
@@ -225,11 +242,37 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       });
     });
 
+    if (!updatedJob) {
+      return NextResponse.json(
+        { error: "Updated job could not be found" },
+        { status: 404 }
+      );
+    }
+
+    const newCompanySlug = updatedJob.company.slug;
+    const newJobSlug = updatedJob.slug;
+    const newIsPublished = updatedJob.isPublished;
+
+    const cacheKeysToDelete = new Set<string>();
+
+    cacheKeysToDelete.add(`company:${oldCompanySlug}`);
+    cacheKeysToDelete.add(`company:${newCompanySlug}`);
+
+    if (oldIsPublished) {
+      cacheKeysToDelete.add(`job:${oldCompanySlug}:${oldJobSlug}`);
+    }
+
+    if (newIsPublished) {
+      cacheKeysToDelete.add(`job:${newCompanySlug}:${newJobSlug}`);
+    }
+
+    await Promise.all(Array.from(cacheKeysToDelete).map((key) => redis.del(key)));
+
     return NextResponse.json(
       {
         data: {
           ...updatedJob,
-          tags: updatedJob?.tags.map((item) => item.tag) ?? [],
+          tags: updatedJob.tags.map((item) => item.tag),
         },
       },
       { status: 200 }
