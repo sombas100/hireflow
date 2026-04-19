@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { redis } from "@/lib/redis";
 
 type RouteContext = {
   params: Promise<{
@@ -66,9 +67,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       where: { id: companyId },
       select: {
         id: true,
+        slug: true,
         owners: {
           select: {
             id: true,
+          },
+        },
+        jobs: {
+          where: {
+            isPublished: true,
+          },
+          select: {
+            slug: true,
           },
         },
       },
@@ -92,6 +102,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       }
     }
 
+    const oldCompanySlug = company.slug;
+    const oldPublishedJobSlugs = company.jobs.map((job) => job.slug);
+
     const updatedCompany = await prisma.company.update({
       where: { id: companyId },
       data: {
@@ -107,8 +120,36 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             jobs: true,
           },
         },
+        jobs: {
+          where: {
+            isPublished: true,
+          },
+          select: {
+            slug: true,
+          },
+        },
       },
     });
+
+    const newCompanySlug = updatedCompany.slug;
+    const newPublishedJobSlugs = updatedCompany.jobs.map((job) => job.slug);
+
+    const cacheKeysToDelete = new Set<string>();
+
+    cacheKeysToDelete.add(`company:${oldCompanySlug}`);
+    cacheKeysToDelete.add(`company:${newCompanySlug}`);
+
+    for (const jobSlug of oldPublishedJobSlugs) {
+      cacheKeysToDelete.add(`job:${oldCompanySlug}:${jobSlug}`);
+    }
+
+    for (const jobSlug of newPublishedJobSlugs) {
+      cacheKeysToDelete.add(`job:${newCompanySlug}:${jobSlug}`);
+    }
+
+    await Promise.all(
+      Array.from(cacheKeysToDelete).map((key) => redis.del(key))
+    );
 
     return NextResponse.json({ data: updatedCompany }, { status: 200 });
   } catch (error: any) {
@@ -155,6 +196,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
       select: {
         id: true,
         name: true,
+        slug: true,
         owners: {
           select: {
             id: true,
@@ -163,6 +205,14 @@ export async function DELETE(_req: Request, context: RouteContext) {
         _count: {
           select: {
             jobs: true,
+          },
+        },
+        jobs: {
+          where: {
+            isPublished: true,
+          },
+          select: {
+            slug: true,
           },
         },
       },
@@ -196,9 +246,24 @@ export async function DELETE(_req: Request, context: RouteContext) {
       );
     }
 
+    const oldCompanySlug = company.slug;
+    const oldPublishedJobSlugs = company.jobs.map((job) => job.slug);
+
     await prisma.company.delete({
       where: { id: companyId },
     });
+
+    const cacheKeysToDelete = new Set<string>();
+
+    cacheKeysToDelete.add(`company:${oldCompanySlug}`);
+
+    for (const jobSlug of oldPublishedJobSlugs) {
+      cacheKeysToDelete.add(`job:${oldCompanySlug}:${jobSlug}`);
+    }
+
+    await Promise.all(
+      Array.from(cacheKeysToDelete).map((key) => redis.del(key))
+    );
 
     return NextResponse.json(
       { message: "Company deleted successfully" },
