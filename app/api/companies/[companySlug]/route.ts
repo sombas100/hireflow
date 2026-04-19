@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
+import type { CachedCompanyDetailsResponse } from "@/lib/cache-types";
 
 type RouteContext = {
   params: Promise<{
     companySlug: string;
   }>;
 };
+
+function buildCompanyDetailsCacheKey(companySlug: string) {
+  return `company:${companySlug}`;
+}
 
 export async function GET(_req: NextRequest, context: RouteContext) {
   try {
@@ -16,6 +22,14 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         { error: "Company slug is required" },
         { status: 400 }
       );
+    }
+
+    const cacheKey = buildCompanyDetailsCacheKey(companySlug);
+
+    const cached = await redis.get<CachedCompanyDetailsResponse>(cacheKey);
+
+    if (cached) {
+      return NextResponse.json(cached, { status: 200 });
     }
 
     const company = await prisma.company.findUnique({
@@ -64,15 +78,18 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       tags: job.tags.map((item) => item.tag),
     }));
 
-    return NextResponse.json(
-      {
-        data: {
-          ...company,
-          jobs: formattedJobs,
-        },
+    const response: CachedCompanyDetailsResponse = {
+      data: {
+        ...company,
+        jobs: formattedJobs,
       },
-      { status: 200 }
-    );
+    };
+
+    await redis.set(cacheKey, response, {
+      ex: 300,
+    });
+
+    return NextResponse.json(response, { status: 200 });
   } catch (error) {
     console.error("Get company details error:", error);
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { NextRequest, NextResponse } from "next/server";
-import type { CachedJob } from "@/lib/types";
+import type { CachedJob } from "@/lib/cache-types";
 
 type RouteContext = {
   params: Promise<{ companySlug: string; jobSlug: string }>;

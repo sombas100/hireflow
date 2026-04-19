@@ -85,3 +85,73 @@ export type CachedJobsResponse = {
     hasPrevPage: boolean;
   };
 };
+
+export type CachedCompaniesResponse = {
+  data: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    location: string | null;
+    websiteUrl: string | null;
+    logoUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    _count: {
+      jobs: number;
+    };
+  }>;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
+export type CachedCompanyDetailsResponse = {
+  data: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    location: string | null;
+    websiteUrl: string | null;
+    logoUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    jobs: Array<{
+      id: string;
+      title: string;
+      slug: string;
+      description: string | null;
+      requirements: string | null;
+      benefits: string | null;
+      location: string | null;
+      isRemote: boolean;
+      jobType: string;
+      workplaceType: string;
+      experienceLevel: string | null;
+      salaryMin: number | null;
+      salaryMax: number | null;
+      salaryPeriod: string | null;
+      currency: string | null;
+      applyUrl: string | null;
+      applyEmail: string | null;
+      isPublished: boolean;
+      publishedAt: Date | null;
+      expiresAt: Date | null;
+      createdAt: Date;
+      updatedAt: Date;
+      companyId: string;
+      tags: {
+        id: string;
+        name: string;
+        slug: string;
+      }[];
+      _count: {
+        applications: number;
+      };
+    }>;
+  };
+};

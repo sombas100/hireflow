@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { JobsQuerySchema } from "@/zod/zod";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
-import type { CachedJobsResponse } from "@/lib/types";
+import type { CachedJobsResponse } from "@/lib/cache-types";
 
 function buildJobsCacheKey(params: {
   q?: string;
