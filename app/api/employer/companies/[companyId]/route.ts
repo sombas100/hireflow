@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { redis } from "@/lib/redis";
+import {
+  invalidateMultipleCacheKeys,
+  invalidateCompanyWithPublishedJobs,
+} from "@/lib/cache/invalidation";
 
 type RouteContext = {
   params: Promise<{
@@ -134,22 +137,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const newCompanySlug = updatedCompany.slug;
     const newPublishedJobSlugs = updatedCompany.jobs.map((job) => job.slug);
 
-    const cacheKeysToDelete = new Set<string>();
+    const cacheKeysToDelete = [
+      `company:${oldCompanySlug}`,
+      `company:${newCompanySlug}`,
+      ...oldPublishedJobSlugs.map((jobSlug) => `job:${oldCompanySlug}:${jobSlug}`),
+      ...newPublishedJobSlugs.map((jobSlug) => `job:${newCompanySlug}:${jobSlug}`),
+    ];
 
-    cacheKeysToDelete.add(`company:${oldCompanySlug}`);
-    cacheKeysToDelete.add(`company:${newCompanySlug}`);
-
-    for (const jobSlug of oldPublishedJobSlugs) {
-      cacheKeysToDelete.add(`job:${oldCompanySlug}:${jobSlug}`);
-    }
-
-    for (const jobSlug of newPublishedJobSlugs) {
-      cacheKeysToDelete.add(`job:${newCompanySlug}:${jobSlug}`);
-    }
-
-    await Promise.all(
-      Array.from(cacheKeysToDelete).map((key) => redis.del(key))
-    );
+    await invalidateMultipleCacheKeys(cacheKeysToDelete);
 
     return NextResponse.json({ data: updatedCompany }, { status: 200 });
   } catch (error: any) {
@@ -253,17 +248,10 @@ export async function DELETE(_req: Request, context: RouteContext) {
       where: { id: companyId },
     });
 
-    const cacheKeysToDelete = new Set<string>();
-
-    cacheKeysToDelete.add(`company:${oldCompanySlug}`);
-
-    for (const jobSlug of oldPublishedJobSlugs) {
-      cacheKeysToDelete.add(`job:${oldCompanySlug}:${jobSlug}`);
-    }
-
-    await Promise.all(
-      Array.from(cacheKeysToDelete).map((key) => redis.del(key))
-    );
+    await invalidateCompanyWithPublishedJobs({
+      companySlug: oldCompanySlug,
+      publishedJobSlugs: oldPublishedJobSlugs,
+    });
 
     return NextResponse.json(
       { message: "Company deleted successfully" },

@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { CreateJobSchema } from "@/zod/zod";
-import { redis } from "@/lib/redis";
+
+import { invalidateCompanyAndJobCaches } from "@/lib/cache/invalidation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -114,11 +115,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await redis.del(`company:${job.company.slug}`);
-
-    if (job.isPublished) {
-      await redis.del(`job:${job.company.slug}:${job.slug}`);
-    }
+    await invalidateCompanyAndJobCaches({
+  companySlug: job.company.slug,
+  jobSlug: job.slug,
+  isPublished: job.isPublished,
+});
 
     return NextResponse.json(
       {

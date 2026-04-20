@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { UpdateJobSchema } from "@/zod/zod";
 import { redis } from "@/lib/redis";
+import { invalidateCompanyAndJobCaches, invalidateMultipleCacheKeys } from "@/lib/cache/invalidation";
 
 type RouteContext = {
   params: Promise<{
@@ -72,11 +73,11 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       where: { id: jobId },
     });
 
-    await redis.del(`company:${job.company.slug}`);
-
-    if (job.isPublished) {
-      await redis.del(`job:${job.company.slug}:${job.slug}`);
-    }
+    await invalidateCompanyAndJobCaches({
+      companySlug: job.company.slug,
+      jobSlug: job.slug,
+      isPublished: job.isPublished,
+    });
 
     return NextResponse.json(
       { message: "Job deleted successfully" },
@@ -253,20 +254,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const newJobSlug = updatedJob.slug;
     const newIsPublished = updatedJob.isPublished;
 
-    const cacheKeysToDelete = new Set<string>();
-
-    cacheKeysToDelete.add(`company:${oldCompanySlug}`);
-    cacheKeysToDelete.add(`company:${newCompanySlug}`);
-
-    if (oldIsPublished) {
-      cacheKeysToDelete.add(`job:${oldCompanySlug}:${oldJobSlug}`);
-    }
-
-    if (newIsPublished) {
-      cacheKeysToDelete.add(`job:${newCompanySlug}:${newJobSlug}`);
-    }
-
-    await Promise.all(Array.from(cacheKeysToDelete).map((key) => redis.del(key)));
+    await invalidateMultipleCacheKeys([
+      `company:${oldCompanySlug}`,
+      `company:${newCompanySlug}`,
+      oldIsPublished ? `job:${oldCompanySlug}:${oldJobSlug}` : null,
+      newIsPublished ? `job:${newCompanySlug}:${newJobSlug}` : null,
+        ]);
 
     return NextResponse.json(
       {
