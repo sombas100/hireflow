@@ -10,7 +10,7 @@ export default function CreateCompanyForm() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
-  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("https://");
   const [location, setLocation] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
